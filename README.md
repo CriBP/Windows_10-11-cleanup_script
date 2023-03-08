@@ -25,8 +25,7 @@ Important Notes:
 - the scripts are self explanatory, they have lines of description on every step
 - to speed up user experience and reduce eye strain the background is removed, Color Scheme turned to Dark, and no sounds
 - these scrips were made speciffically for Ekklesia PC's cleanup, but they can work on any Windows PC, and can be customized
-- the "hosts" file contains a list of bad websites, known for moral or controversial issues, facebook included! Loaded to the right place, it will provide
-    a first-hand protection to any computer. It may be attacked by some Antivirus Software.
+- the "hosts" file contains a list of bad websites, known for moral or controversial issues, facebook included but enabled for people who really want it (you may remove # to block)! Loaded to the right place, it will provide a first-hand protection to any computer. It may be attacked by some Antivirus Software.
 - While this is a big list of cleanup commands, it is not complete. Further cleaning is recommended by 
     using a few Portable Apps from https://portableapps.com/apps/utilities like:
     - Revo Uninstaller
