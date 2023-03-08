@@ -31,7 +31,7 @@
 0.0.0.0	a.ads2.msads.net
 0.0.0.0	a.rad.msn.com
 0.0.0.0	ac3.msn.com
-0.0.0.0	ad.doubleclick.net
+# 0.0.0.0	ad.doubleclick.net - Google Add Server removed
 0.0.0.0	ads.msn.com
 0.0.0.0	ads1.msn.com
 0.0.0.0	ads1.msads.net
@@ -185,8 +185,8 @@
 
 # Personal Privacy list #
 0.0.0.0	insider.msg.yahoo.com
-0.0.0.0	www.facebook.com
-0.0.0.0	facebook.com
+# 0.0.0.0	www.facebook.com - removed here for people who can't live without (I keep this on for my computers)
+# 0.0.0.0	facebook.com
 0.0.0.0	babylon.com
 0.0.0.0	www.babylon.com
 0.0.0.0	www.couponxplorer.com
