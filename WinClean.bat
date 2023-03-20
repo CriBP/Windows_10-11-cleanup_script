@@ -1,7 +1,6 @@
 cls
 msg "%username%" Please make sure you: `Read_First.txt
 Notepad "`Read_First.txt"
-call :IsAdmin
 
 Echo Rename C: Drive to WinX-OS
 label C: Windows-OS
@@ -612,10 +611,3 @@ del /Q /F "%UserProfile%\Desktop\Microsoft Edge.lnk" > NUL 2>&1
 cd %ProgramFiles(x86)%\Microsoft\Edge\Application\
 Echo Please change Directory to the "installation number"\installer and run setup.exe --uninstall --system-level --verbose-logging --force-uninstall
 dir
-
-:IsAdmin
-Reg.exe query "HKU\S-1-5-19\Environment"
-If Not %ERRORLEVEL% EQU 0 (
- Cls & Echo You must have administrator rights to continue ... 
- Pause & Exit
-goto:eof
