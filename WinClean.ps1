@@ -37,11 +37,18 @@ Write-Verbose -Message ('Starting Sysprep Fixes')
 #Creates a PSDrive to be able to access the 'HKCR' tree
 New-PSDrive -Name HKCR -PSProvider Registry -Root HKEY_CLASSES_ROOT
 
+# view a list of installed apps:
+Get-AppxPackage –AllUsers | Select Name, PackageFullName
+Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion, Publisher, InstallDate | Format-Table –AutoSize
+
 Write-Output "Removing bloatware apps."
 #Credit to Reddit user /u/GavinEke for a modified version of my whitelist code
 [regex]$WhitelistedApps = 'Microsoft.ScreenSketch|Microsoft.WindowsCalculator|Microsoft.WindowsStore|Microsoft.Windows.Photos|CanonicalGroupLimited.UbuntuonWindows|`
 Microsoft.MSPaint|Microsoft.WindowsCamera|.NET|Framework|Microsoft.HEIFImageExtension|Microsoft.ScreenSketch|Microsoft.StorePurchaseApp|Microsoft.AccountsControl|`
-Microsoft.VP9VideoExtensions|Microsoft.WebMediaExtensions|Microsoft.WebpImageExtension|Microsoft.Windows.Search|Windows.PrintDialog|Microsoft.WindowsTerminal'
+Microsoft.VP9VideoExtensions|Microsoft.WebMediaExtensions|Microsoft.WebpImageExtension|Microsoft.Windows.Search|Windows.PrintDialog|Microsoft.WindowsTerminal|`
+Microsoft.Win32WebViewHost|Microsoft.Windows.CapturePicker|windows.immersivecontrolpanel|Microsoft.NET.Native|Microsoft.DesktopAppInstaller|`
+Microsoft.HEVCVideoExtension|Microsoft.MicrosoftStickyNotes|Microsoft.Paint|Microsoft.PowerAutomateDesktop|Microsoft.RawImageExtension|Microsoft.ScreenSketch|`
+Microsoft.WindowsNotepad|Microsoft.WindowsSoundRecorder|Microsoft.Windows.ShellExperienceHost|MicrosoftWindows.Client.Core|Microsoft.VCLibs|Microsoft.UI.Xaml'
 Get-AppxPackage -AllUsers | Where-Object {$_.Name -NotMatch $WhitelistedApps} | Remove-AppxPackage -ErrorAction Continue
 # Run this again to avoid error on 1803 or having to reboot.
 Get-AppxPackage -AllUsers | Where-Object {$_.Name -NotMatch $WhitelistedApps} | Remove-AppxPackage -ErrorAction Continue
@@ -64,47 +71,10 @@ Write-Output "White listed Apps Fixed"
 Write-Output "All Apps remaining:..."
 Get-AppxPackage -AllUsers | Select Name, PackageFullName
 
-#Disables Windows Feedback Experience
-Write-Output "Disabling Windows Feedback Experience program"
-$Advertising = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo'
-If (Test-Path $Advertising) {
-Set-ItemProperty $Advertising -Name Enabled -Value 0 -Verbose
-}
-
-#Stops Cortana from being used as part of your Windows Search Function
-Write-Output "Stopping Cortana from being used as part of your Windows Search Function"
-$Search = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search'
-If (Test-Path $Search) {
-Set-ItemProperty $Search -Name AllowCortana -Value 0 -Verbose
-}
-   
-Write-Output "Adding Registry key to prevent bloatware apps from returning"
-#Prevents bloatware applications from returning
-$registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent"
-If (!(Test-Path $registryPath)) {
-mkdir $registryPath -ErrorAction Continue
-New-ItemProperty $registryPath -Name DisableWindowsConsumerFeatures -Value 1 -Verbose -ErrorAction Continue
-}  
-
 Write-Output "Setting Mixed Reality Portal value to 0 so that you can uninstall it in Settings"
 $Holo = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Holographic'
 If (Test-Path $Holo) {
 Set-ItemProperty $Holo -Name FirstRunSucceeded -Value 0 -Verbose
-}
-
-#Disables live tiles
-Write-Output "Disabling live tiles"
-$Live = 'HKCU:\SOFTWARE\Policies\Microsoft\Windows\CurrentVersion\PushNotifications'
-If (!(Test-Path $Live)) {
-mkdir $Live -ErrorAction Continue 
-New-ItemProperty $Live -Name NoTileApplicationNotification -Value 1 -Verbose
-}
-
-#Turns off Data Collection via the AllowTelemtry key by changing it to 0
-Write-Output "Turning off Data Collection"
-$DataCollection = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection'
-If (Test-Path $DataCollection) {
-Set-ItemProperty $DataCollection -Name AllowTelemetry -Value 0 -Verbose
 }
 
 #Disables People icon on Taskbar
@@ -112,13 +82,6 @@ Write-Output "Disabling People icon on Taskbar"
 $People = 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People'
 If (Test-Path $People) {
 Set-ItemProperty $People -Name PeopleBand -Value 0 -Verbose
-}
-
-#Disables suggestions on start menu
-Write-Output "Disabling suggestions on the Start Menu"
-$Suggestions = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager'
-If (Test-Path $Suggestions) {
-Set-ItemProperty $Suggestions -Name SystemPaneSuggestionsEnabled -Value 0 -Verbose
 }
 
 Write-Output "Removing CloudStore from registry if it exists"
@@ -131,59 +94,65 @@ Start-Process Explorer.exe -Wait
 
 #Disables scheduled tasks that are considered unnecessary 
 Write-Output "Disabling scheduled tasks"
-Get-ScheduledTask -TaskName Xbl* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Consolidator | Disable-ScheduledTask
-Get-ScheduledTask -TaskName UsbCeip | Disable-ScheduledTask
-Get-ScheduledTask -TaskName DmClient* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName "EDP Policy Manager" | Disable-ScheduledTask
-Get-ScheduledTask -TaskName SmartScreenSpecific* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName AitAgent* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Microsoft* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName ProgramDataUpdater | Disable-ScheduledTask
-Get-ScheduledTask -TaskName StartupAppTask | Disable-ScheduledTask
-Get-ScheduledTask -TaskName CleanupTemporaryState | Disable-ScheduledTask
-Get-ScheduledTask -TaskName DsSvcCleanup | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Proxy | Disable-ScheduledTask
-Get-ScheduledTask -TaskName License* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName CreateObjectTask | Disable-ScheduledTask
-Get-ScheduledTask -TaskName BthSQM* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName KernelCeipTask* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Uploader* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Microsoft-Windows-DiskDiagnosticDataCollector | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Diagnostics | Disable-ScheduledTask
-Get-ScheduledTask -TaskName File* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName TempSignedLicenseExchange | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Notifications | Disable-ScheduledTask
-Get-ScheduledTask -TaskName WindowsActionDialog | Disable-ScheduledTask
-Get-ScheduledTask -TaskName WinSAT | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Maps* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName ProcessMemoryDiagnosticEvents | Disable-ScheduledTask
-Get-ScheduledTask -TaskName RunFullMemoryDiagnostic | Disable-ScheduledTask
-Get-ScheduledTask -TaskName MNO* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName SystemSoundsService | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Sqm-Tasks | Disable-ScheduledTask
-Get-ScheduledTask -TaskName AnalyzeSystem | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Log* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Registration | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Verified* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName RemoteAssistanceTask | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Background* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName BackupTask* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName NetworkStateChangeTask | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Family* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName IndexerAutomaticMaintenance | Disable-ScheduledTask
-Get-ScheduledTask -TaskName EnableLicense* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Policy* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName SR | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Queue* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Automatic* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Work* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Badge* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName "Sync Licenses*" | Disable-ScheduledTask
-Get-ScheduledTask -TaskName WSRefresh* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName WSTask* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Hive* | Disable-ScheduledTask
-Get-ScheduledTask -TaskName Speech* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Xbl* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Consolidator | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName UsbCeip | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName DmClient* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName "EDP Policy Manager" | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName SmartScreenSpecific* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName AitAgent* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Microsoft* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName ProgramDataUpdater | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName StartupAppTask | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName CleanupTemporaryState | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName DsSvcCleanup | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Proxy | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName License* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName CreateObjectTask | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName BthSQM* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName KernelCeipTask* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Uploader* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Microsoft-Windows-DiskDiagnosticDataCollector | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Diagnostics | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName File* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName TempSignedLicenseExchange | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Notifications | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName WindowsActionDialog | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName WinSAT | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Maps* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName ProcessMemoryDiagnosticEvents | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName RunFullMemoryDiagnostic | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName MNO* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName SystemSoundsService | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Sqm-Tasks | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName AnalyzeSystem | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Log* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Registration | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Verified* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName RemoteAssistanceTask | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Background* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName BackupTask* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName NetworkStateChangeTask | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Family* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName IndexerAutomaticMaintenance | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName EnableLicense* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Policy* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName SR | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Queue* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Automatic* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Work* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Badge* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName "Sync Licenses*" | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName WSRefresh* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName WSTask* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Hive* | Disable-ScheduledTask
+#Get-ScheduledTask -TaskName Speech* | Disable-ScheduledTask
+
+#Uninstall Edge
+$EdgeVersion = (Get-AppxPackage "Microsoft.MicrosoftEdge.Stable" -AllUsers).Version
+$EdgeLstVersion=$EdgeVersion[-1]
+$EdgeSetupPath = ${env:ProgramFiles(x86)} + '\Microsoft\Edge\Application\' + $EdgeLstVersion
+
 
 #Stopping Edge from taking over as the default PDF Viewer.
 Write-Output "Stopping Edge from taking over as the default PDF Viewer."
@@ -314,18 +283,10 @@ Import-StartLayout -LayoutPath $layoutFile -MountPath $env:SystemDrive\
 
 Remove-Item $layoutFile
 
-#Disable Cortana
-Write-Output "Disabling Cortana"
-Get-AppxPackage -allusers Microsoft.549981C3F5F10 | Remove-AppxPackage
-Get-AppxPackage *549981C3F5F10* | Remove-AppxPackage
-Get-AppxPackage -AllUsers -PackageTypeFilter Bundle -name "*Microsoft.549981C3F5F10*" | Remove-AppxPackage -AllUsers
-if((Test-Path -LiteralPath "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced") -ne $true) {  New-Item "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -force -ea Continue };
-New-ItemProperty -LiteralPath 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Name 'ShowCortanaButton' -Value 0 -PropertyType DWord -Force -ea Continue;
-
 #Remove Optional Features
-Write-Host "Remove Windows Media Player:"
-Get-WindowsPackage -Online | Where PackageName -like *MediaPlayer* | Remove-WindowsPackage -Online -NoRestart
-Get-WindowsCapability -online | ? {$_.Name -like '*WindowsMediaPlayer*'} | Remove-WindowsCapability -online
+#Write-Host "Remove Windows Media Player:"
+#Get-WindowsPackage -Online | Where PackageName -like *MediaPlayer* | Remove-WindowsPackage -Online -NoRestart
+#Get-WindowsCapability -online | ? {$_.Name -like '*WindowsMediaPlayer*'} | Remove-WindowsCapability -online
 Write-Host "Remove Quick Assist:"
 Get-WindowsPackage -Online | Where PackageName -like *QuickAssist* | Remove-WindowsPackage -Online -NoRestart
 Get-WindowsCapability -online | ? {$_.Name -like '*QuickAssist*'} | Remove-WindowsCapability -online
