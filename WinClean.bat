@@ -471,7 +471,7 @@ start explorer.exe
 
 Echo Disable Remote Assistance
 :: Created by: Shawn Brink on: August 27th 2018:: Tutorial: https://www.tenforums.com/tutorials/116749-enable-disable-remote-assistance-connections-windows.html
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Remote Assistance" /v fAllowToGetHelp /t REG_DWORD /d 0
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Remote Assistance" /f /v fAllowToGetHelp /t REG_DWORD /d 0
 netsh advfirewall firewall set rule group="Remote Assistance" new enable=no
 
 Echo Change to Small memory dump
