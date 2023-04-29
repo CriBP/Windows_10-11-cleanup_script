@@ -47,7 +47,7 @@ Write-Output "Removing bloatware apps."
 Microsoft.MSPaint|Microsoft.WindowsCamera|.NET|Framework|Microsoft.HEIFImageExtension|Microsoft.ScreenSketch|Microsoft.StorePurchaseApp|Microsoft.AccountsControl|`
 Microsoft.VP9VideoExtensions|Microsoft.WebMediaExtensions|Microsoft.WebpImageExtension|Microsoft.Windows.Search|Windows.PrintDialog|Microsoft.WindowsTerminal|`
 Microsoft.Win32WebViewHost|Microsoft.Windows.CapturePicker|windows.immersivecontrolpanel|Microsoft.NET.Native|Microsoft.DesktopAppInstaller|`
-Microsoft.HEVCVideoExtension|Microsoft.MicrosoftStickyNotes|Microsoft.Paint|Microsoft.PowerAutomateDesktop|Microsoft.RawImageExtension|Microsoft.ScreenSketch|`
+Microsoft.HEVCVideoExtension|Microsoft.MicrosoftStickyNotes|Microsoft.Paint|Microsoft.RawImageExtension|Microsoft.ScreenSketch|`
 Microsoft.WindowsNotepad|Microsoft.WindowsSoundRecorder|Microsoft.Windows.ShellExperienceHost|MicrosoftWindows.Client.Core|Microsoft.VCLibs|Microsoft.UI.Xaml'
 Get-AppxPackage -AllUsers | Where-Object {$_.Name -NotMatch $WhitelistedApps} | Remove-AppxPackage -ErrorAction Continue
 # Run this again to avoid error on 1803 or having to reboot.
@@ -61,7 +61,6 @@ Get-AppxPackage | Where-Object {$_.Name -NotMatch $WhitelistedApps} | Remove-App
 Write-Output "Checking to see if any Whitelisted Apps were removed, and if so re-adding them."
 #This includes fixes by xsisbest
 If(!(Get-AppxPackage -AllUsers | Select Microsoft.MSPaint, Microsoft.WindowsCalculator, Microsoft.WindowsStore, Microsoft.WindowsSoundRecorder, Microsoft.Windows.Photos, Microsoft.WindowsTerminal)) {
-#Credit to abulgatz for the 4 lines of code
 Get-AppxPackage -allusers Microsoft.MSPaint | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"}
 Get-AppxPackage -allusers Microsoft.WindowsCalculator | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"}
 Get-AppxPackage -allusers Microsoft.WindowsStore | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"}
@@ -76,77 +75,6 @@ $Holo = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Holographic'
 If (Test-Path $Holo) {
 Set-ItemProperty $Holo -Name FirstRunSucceeded -Value 0 -Verbose
 }
-
-#Disables People icon on Taskbar
-Write-Output "Disabling People icon on Taskbar"
-$People = 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People'
-If (Test-Path $People) {
-Set-ItemProperty $People -Name PeopleBand -Value 0 -Verbose
-}
-
-Write-Output "Removing CloudStore from registry if it exists"
-$CloudStore = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\CloudStore'
-If (Test-Path $CloudStore) {
-Stop-Process -Name explorer -Force
-Remove-Item $CloudStore -Recurse -Force
-Start-Process Explorer.exe -Wait
-}
-
-#Disables scheduled tasks that are considered unnecessary 
-Write-Output "Disabling scheduled tasks"
-#Get-ScheduledTask -TaskName Xbl* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Consolidator | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName UsbCeip | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName DmClient* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName "EDP Policy Manager" | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName SmartScreenSpecific* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName AitAgent* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Microsoft* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName ProgramDataUpdater | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName StartupAppTask | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName CleanupTemporaryState | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName DsSvcCleanup | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Proxy | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName License* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName CreateObjectTask | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName BthSQM* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName KernelCeipTask* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Uploader* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Microsoft-Windows-DiskDiagnosticDataCollector | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Diagnostics | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName File* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName TempSignedLicenseExchange | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Notifications | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName WindowsActionDialog | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName WinSAT | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Maps* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName ProcessMemoryDiagnosticEvents | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName RunFullMemoryDiagnostic | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName MNO* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName SystemSoundsService | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Sqm-Tasks | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName AnalyzeSystem | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Log* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Registration | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Verified* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName RemoteAssistanceTask | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Background* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName BackupTask* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName NetworkStateChangeTask | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Family* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName IndexerAutomaticMaintenance | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName EnableLicense* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Policy* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName SR | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Queue* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Automatic* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Work* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Badge* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName "Sync Licenses*" | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName WSRefresh* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName WSTask* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Hive* | Disable-ScheduledTask
-#Get-ScheduledTask -TaskName Speech* | Disable-ScheduledTask
 
 #Uninstall Edge
 $EdgeVersion = (Get-AppxPackage "Microsoft.MicrosoftEdge.Stable" -AllUsers).Version
@@ -189,18 +117,6 @@ $Edge = "HKCR:\AppXd4nrz8ff68srnhf9t5a8sbjyar1cr723"
 If (Test-Path $Edge) {
 Set-Item $Edge AppXd4nrz8ff68srnhf9t5a8sbjyar1cr723_ 
 }
-
-#Removes 3D Objects from the 'My Computer' submenu in explorer
-Write-Host "Removing 3D Objects from the 'My Computer' submenu in explorer"
-$Objects32 = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{0DB7E03F-FC29-4DC6-9020-FF41B59E513A}"
-$Objects64 = "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{0DB7E03F-FC29-4DC6-9020-FF41B59E513A}"
-If (Test-Path $Objects32) {
-Remove-Item $Objects32 -Recurse 
-}
-If (Test-Path $Objects64) {
-Remove-Item $Objects64 -Recurse 
-}
-Start-Sleep 1
 
 #Cleanup Start Menu
 Write-Output "Cleaning up the Start Menu Apps"
@@ -284,15 +200,6 @@ Import-StartLayout -LayoutPath $layoutFile -MountPath $env:SystemDrive\
 Remove-Item $layoutFile
 
 #Remove Optional Features
-#Write-Host "Remove Windows Media Player:"
-#Get-WindowsPackage -Online | Where PackageName -like *MediaPlayer* | Remove-WindowsPackage -Online -NoRestart
-#Get-WindowsCapability -online | ? {$_.Name -like '*WindowsMediaPlayer*'} | Remove-WindowsCapability -online
-Write-Host "Remove Quick Assist:"
-Get-WindowsPackage -Online | Where PackageName -like *QuickAssist* | Remove-WindowsPackage -Online -NoRestart
-Get-WindowsCapability -online | ? {$_.Name -like '*QuickAssist*'} | Remove-WindowsCapability -online
-Write-Host "Remove Hello Face:"
-Get-WindowsPackage -Online | Where PackageName -like *Hello-Face* | Remove-WindowsPackage -Online -NoRestart
-Get-WindowsCapability -online | ? {$_.Name -like '*Hello.Face*'} | Remove-WindowsCapability -online
 Write-Host "Remove Internet Printing:"
 Get-WindowsCapability -online | ? {$_.Name -like '*InternetPrinting*'} | Remove-WindowsCapability -online
 Write-Host "Remove Work Folders:"
@@ -301,8 +208,6 @@ Write-Host "Remove Contact Support:"
 Get-WindowsCapability -online | ? {$_.Name -like '*ContactSupport*'} | Remove-WindowsCapability -online
 Write-Host "Remove Language Speech:"
 Get-WindowsCapability -online | ? {$_.Name -like '*Language.Speech*'} | Remove-WindowsCapability -online
-Write-Host "Remove Math Recognizer:"
-Get-WindowsCapability -online | ? {$_.Name -like '*MathRecognizer*'} | Remove-WindowsCapability -online
 
 Write-Host "Restore InstallService"
 If (Get-Service -Name InstallService | Where-Object {$_.Status -eq "Stopped"}) {  
