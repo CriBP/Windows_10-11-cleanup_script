@@ -382,8 +382,18 @@ reg add "HKCU\SOFTWARE\Microsoft\Input\TIPC" /f /v "Enabled" /t REG_DWORD /d 0
 
 :: Disables Autoplay and Turn Off AutoRun in Windows
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /f /v "DisableAutoplay" /t REG_DWORD /d 1
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "NoDriveTypeAutoRun" /t REG_DWORD /d 0xFF
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\policies\Explorer" /f /v "NoDriveTypeAutoRun" /t REG_DWORD /d 0xFF
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "NoDriveTypeAutoRun" /t REG_DWORD /d "255"
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "NoDriveTypeAutoRun" /t REG_DWORD /d "255"
+
+:: DFS Share Refresh Issue - https://wiki.ledhed.net/index.php/DFS_Share_Refresh_Issue
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "NoSimpleNetIDList" /t REG_DWORD /d 1
+
+:: Disable Low Disk Space Checks in Windows - https://www.lifewire.com/how-to-disable-low-disk-space-checks-in-windows-vista-2626331
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "NoLowDiskSpaceChecks" /t REG_DWORD /d 1
+
+:: Windows 11 Explorer use compact mode and restore Classic Context Menu
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v UseCompactMode /t REG_DWORD /d 1
+reg add "HKCU\SOFTWARE\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f
 
 :: Disables Meet Now Chat and Microsoft Teams; Remove Chat from the taskbar in Windows 11
 reg delete "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /f /v "com.squirrel.Teams.Teams"
@@ -523,12 +533,12 @@ reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v
 reg add "HKCU\Control Panel\Desktop" /f /v "DragFullWindows" /d 0
 :: Slide open combo boxes - off
 reg add "HKCU\Control Panel\Desktop" /f /v "UserPreferencesMask" /t REG_BINARY /d "9032078090000000"
-:: Smooth edges of screen fonts
-reg add "HKCU\Control Panel\Desktop" /f /v "FontSmoothing" /t REG_DWORD /d 2
 :: Smooth-scrool list boxes - off
 reg add "HKCU\Control Panel\Desktop" /f /v "UserPreferencesMask" /t REG_BINARY /d "9032078090000000"
 :: Use drop shadows for icon labels on the desktop
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "ListviewShadow" /t REG_DWORD /d 0
+:: Smooth edges of screen fonts
+reg add "HKCU\Control Panel\Desktop" /f /v "FontSmoothing" /t REG_DWORD /d 2
 :: Move the Start button to the Left Corner:
 taskkill /f /im explorer.exe
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v TaskbarAl /t REG_DWORD /d 0
@@ -780,13 +790,14 @@ schtasks /Change /TN "\Microsoft\Windows\Workplace Join\Device-Sync" /disable
 schtasks /Change /TN "\Microsoft\Windows\Workplace Join\Recovery-Check" /disable
 :: This task will automatically upload a roaming user profile's registry hive to its network location.
 schtasks /Change /TN "\Microsoft\Windows\User Profile Service\HiveUploadTask" /disable
-:: 
+
+
 
 :: Removing Telemetry and other unnecessary services:
 :: Connected User Experience and Telemetry component, also known as the Universal Telemetry Client (UTC)...
 sc stop DiagTrack
 sc delete DiagTrack
-:: WAP Push Message Routing Service...
+:: WAP Push Message Routing Service... Device Management Wireless Application Protocol (WAP) Push message Routing Service — This service is another service that helps to collect and send user data to Microsoft.
 sc stop dmwappushservice
 sc delete dmwappushservice
 :: Windows Error Reporting Service Description: Allows errors to be reported when programs stop working or responding ...
@@ -809,12 +820,11 @@ sc stop wlidsvc
 sc stop wisvc
 sc delete wisvc
 :: Retail Demo experience, for retail store staff who want to demo it to customers...
+sc stop RetailDemo
 sc delete RetailDemo
 :: Microsoft (R) Diagnostics Hub Standard Collector Service, this service collects real time ETW events and processes them...
+sc stop diagnosticshub.standardcollector.service
 sc delete diagnosticshub.standardcollector.service
-:: Certificate Propagation - Copies user certificates and root certificates from smart cards
-sc stop CertPropSvc
-sc config "CertPropSvc" start=demand
 :: Disable the use of biometrics - Windows Biometric Service
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Biometrics" /f /v "Enabled" /t REG_DWORD /d "0"
 sc stop WbioSrvc
@@ -832,6 +842,12 @@ sc config "SharedAccess" start=demand
 :: Parental Controls
 sc stop WpcMonSvc
 sc config "WpcMonSvc" start=disabled
+:: Phone Service - Manages the telephony state on the device
+sc stop PhoneSvc
+sc config "PhoneSvc" start=demand
+:: Fax Service - Enables you to send and receive faxes
+sc stop Fax
+sc config "Fax" start=demand
 :: Remote Registry
 sc stop RemoteRegistry
 sc config "RemoteRegistry" start=disabled
@@ -844,9 +860,40 @@ sc config "TabletInputService" start=demand
 :: Windows Image Acquisition (WIA)
 sc stop stisvc
 sc config "stisvc" start=demand
-:: Windows Image Acquisition (WIA)
-sc stop stisvc
-sc config "stisvc" start=demand
+:: Wallet Service - Hosts objects used by clients of the wallet
+sc stop WalletService
+sc config "WalletService" start=demand
+:: AllJoyn Router Service — This is a service that lets you connect Windows to the Internet of Things and communicate with devices such as smart TVs, refrigerators, light bulbs, thermostats, etc.
+sc stop AJRouter
+sc config "AJRouter" start=demand
+:: Program Compatibility Assistant Service - This service provides support for the Program Compatibility Assistant (PCA).
+sc stop PcaSvc
+sc config "PcaSvc" start=demand
+:: Portable Device Enumerator Service — This service is needed for making group policy changes for removable drives and to synchronize content for applications like Windows Media Player and Image Import Wizard on the removable drive.
+sc stop WPDBusEnum
+sc config "WPDBusEnum" start=demand
+:: Network connection broker — This service brokers connections and allows Microsoft Store apps to get notifications from the internet.
+sc stop NcbService
+sc config "NcbService" start=demand
+:: Windows event log — Similar to number 23, this service allows logs to be generated about Windows events such as querying, subscribing to, and archiving events.
+sc stop EventLog
+sc config "EventLog" start=demand
+:: Smart Card (and related services) — These services let Windows use smart cards that are required for security purposes in corporations and large organizations.
+sc stop SCardSvr
+sc config "SCardSvr" start=demand
+sc stop ScDeviceEnum
+sc config "ScDeviceEnum" start=demand
+sc stop SCPolicySvc
+sc config "SCPolicySvc" start=demand
+:: Certificate Propagation - Copies user certificates and root certificates from smart cards
+sc stop CertPropSvc
+sc config "CertPropSvc" start=demand
+:: Enterprise App Management Service — This service is only needed to manage enterprise apps that are provided by organizations and companies.
+sc stop EntAppSvc
+sc config "EntAppSvc" start=demand
+:: Netlogon — This is another network service that helps establish and secure channels between a computer and the domain controller.
+sc stop Netlogon
+sc config "Netlogon" start=demand
 
 
 :: Preventing Windows from re-enabling Telemetry services...
