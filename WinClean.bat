@@ -536,12 +536,12 @@ reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v
 reg add "HKCU\Control Panel\Desktop" /f /v "DragFullWindows" /d 0
 :: Slide open combo boxes - off
 reg add "HKCU\Control Panel\Desktop" /f /v "UserPreferencesMask" /t REG_BINARY /d "9032078090000000"
+:: Smooth edges of screen fonts
+reg add "HKCU\Control Panel\Desktop" /f /v "FontSmoothing" /t REG_SZ /d "2"
 :: Smooth-scrool list boxes - off
 reg add "HKCU\Control Panel\Desktop" /f /v "UserPreferencesMask" /t REG_BINARY /d "9032078090000000"
 :: Use drop shadows for icon labels on the desktop
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "ListviewShadow" /t REG_DWORD /d 0
-:: Smooth edges of screen fonts
-reg add "HKCU\Control Panel\Desktop" /f /v "FontSmoothing" /t REG_DWORD /d 2
 :: Move the Start button to the Left Corner:
 taskkill /f /im explorer.exe
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v TaskbarAl /t REG_DWORD /d 0
@@ -912,10 +912,14 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\dmwappushservice\Parameters" /f 
 
 :: System TuneUp
 :: Reduce Application idlesness at closing to improve shutdown process
-reg add "HKCU\Control Panel\Desktop" /f /v "LowLevelHooksTimeout" /t REG_DWORD /d 4000
-reg add "HKCU\Control Panel\Desktop" /f /v "WaitToKillServiceTimeout" /t REG_DWORD /d 5000
-reg add "HKCU\Control Panel\Desktop" /f /v "HungAppTimeout" /t REG_DWORD /d 3000
-reg add "HKCU\Control Panel\Desktop" /f /v "WaitToKillAppTimeout" /t REG_DWORD /d 10000
+reg delete "HKCU\Control Panel\Desktop" /f /v "LowLevelHooksTimeout"
+reg delete "HKCU\Control Panel\Desktop" /f /v "WaitToKillServiceTimeout"
+reg delete "HKCU\Control Panel\Desktop" /f /v "HungAppTimeout"
+reg delete "HKCU\Control Panel\Desktop" /f /v "WaitToKillAppTimeout"
+reg add "HKCU\Control Panel\Desktop" /f /v "LowLevelHooksTimeout" /t REG_SZ /d "4000"
+reg add "HKCU\Control Panel\Desktop" /f /v "WaitToKillServiceTimeout" /t REG_SZ /d "5000"
+reg add "HKCU\Control Panel\Desktop" /f /v "HungAppTimeout" /t REG_SZ /d "3000"
+reg add "HKCU\Control Panel\Desktop" /f /v "WaitToKillAppTimeout" /t REG_SZ /d "10000"
 :: System Stability
 :: Disable automatical reboot when system encounters blue screen
 reg add "HKLM\SYSTEM\ControlSet001\Control\CrashControl" /f /v "AutoReboot" /t REG_DWORD /d 0
@@ -926,7 +930,7 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\SecurePipeServers\winreg" /f /v "
 :: Set Windows Explorer components to run in separate processes avoiding system conflicts
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /f /v "DesktopProcess" /t REG_DWORD /d 1
 :: Close frozen processes to avoid system crashes
-reg add "HKCU\Control Panel\Desktop" /f /v "AutoEndTasks" /t REG_DWORD /d 1
+reg add "HKCU\Control Panel\Desktop" /f /v "AutoEndTasks" /t REG_SZ /d "1"
 :: System Speedup
 :: Remove the word "shortcut" from the shortcut icons
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /f /v "link" /t REG_BINARY /d "00000000"
@@ -939,7 +943,7 @@ reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /f /v "link" /
 :: Speed up display speed of Taskbar Window Previews.
 reg add "HKCU\Control Panel\Mouse" /f /v "MouseHoverTime" /t REG_SZ /d "100"
 :: Speed up Aero Snap to make thumbnail display faster.
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /f /v "link" /t REG_DWORD /d 0
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "ExtendedUIHoverTime" /t REG_DWORD /d "0"
 :: Optimized response speed of system display.
 reg add "HKCU\Control Panel\Desktop" /f /v "MenuShowDelay" /t REG_SZ /d 0
 :: Increase system icon cache and speed up desktop display.
