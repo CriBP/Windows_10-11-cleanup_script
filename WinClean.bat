@@ -58,6 +58,9 @@ reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcon
 :: Icons Layout
 reg add "HKCU\SOFTWARE\Microsoft\Windows\Shell\Bags\1\Desktop" /f /v "IconLayouts" /t REG_BINARY /d "0000000000000000000000000000000003000100010001000c000000000000002c000000000000003a003a007b00350039003000330031004100340037002d0033004600370032002d0034003400410037002d0038003900430035002d003500350039003500460045003600420033003000450045007d003e005c00200000002c000000000000003a003a007b00360034003500460046003000340030002d0035003000380031002d0031003000310042002d0039004600300038002d003000300041004100300030003200460039003500340045007d003e002000200000002c000000000000003a003a007b00340035003600340042003200350045002d0033003000430044002d0034003700380037002d0038003200420041002d003300390045003700330041003700350030004200310034007d003e002000200000002c000000000000003a003a007b00320032003800370037004100360044002d0033003700410031002d0034003600310041002d0039003100420030002d004400420044004100350041004100450042004300390039007d003e002000200000001200000000000000450061007300790073006c0069006400650073002e006c006e006b003e0020007c0000001c000000000000004d00750073006900630020004d0061006b006500720020002800360034002d0042006900740029002e006c006e006b003e0020007c000000290000000000000053004f0055004e004400200046004f00520047004500200041007500640069006f002000530074007500640069006f002000310035002000280078003600340029002e006c006e006b003e0020007c0000001c0000000000000053006f0075006e006400200046006f007200670065002000500072006f002000310030002e0030002e006c006e006b003e0020007c0000001600000000000000560045004700410053002000500072006f002000310039002e0030002e006c006e006b003e0020007c0000001400000000000000560045004700410053002000530074007200650061006d002e006c006e006b003e0020007c0000000f000000000000006400650073006b0074006f0070002e0069006e0069003e0020007c0000000f000000000000006400650073006b0074006f0070002e0069006e0069003e00200020000000010000000000000002000100000000000000000001000000000000000200010000000000000000002200000010000000010000000c0000000000000000000000000000000000000000000000803f0100000000000000004002000000000000004040030000000000000080400400000000000000a0400500000000000000c0400600000000000000e0400700000000000000004108000000000000001041090000000000000020410a0000000000000030410b00"
 
+:: Setting Mixed Reality Portal value to 0 so that you can uninstall it in Settings
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Holographic" /f /v "FirstRunSucceeded " /t REG_DWORD /d 0
+
 :: Remove Optional Features - List all Optional Features
 dism /Online /Get-Capabilities
 :: "Remove Windows Media Player:"
@@ -906,6 +909,131 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\dmwappushservice" /f /v "Start" 
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\dmwappushservice" /f /v "Type" /t REG_DWORD /d 20
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\dmwappushservice" /f /v "ServiceSidType" /t REG_DWORD /d 1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\dmwappushservice\Parameters" /f /v "ServiceDllUnloadOnStop" /t REG_DWORD /d 1
+
+:: System TuneUp
+:: Reduce Application idlesness at closing to improve shutdown process
+reg add "HKCU\Control Panel\Desktop" /f /v "LowLevelHooksTimeout" /t REG_DWORD /d 4000
+reg add "HKCU\Control Panel\Desktop" /f /v "WaitToKillServiceTimeout" /t REG_DWORD /d 5000
+reg add "HKCU\Control Panel\Desktop" /f /v "HungAppTimeout" /t REG_DWORD /d 3000
+reg add "HKCU\Control Panel\Desktop" /f /v "WaitToKillAppTimeout" /t REG_DWORD /d 10000
+:: System Stability
+:: Disable automatical reboot when system encounters blue screen
+reg add "HKLM\SYSTEM\ControlSet001\Control\CrashControl" /f /v "AutoReboot" /t REG_DWORD /d 0
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\CrashControl" /f /v "AutoReboot" /t REG_DWORD /d 0
+:: Disable registry modification from a remote computer
+reg add "HKLM\SYSTEM\ControlSet001\Control\SecurePipeServers\winreg" /f /v "remoteregaccess" /t REG_DWORD /d 1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\SecurePipeServers\winreg" /f /v "remoteregaccess" /t REG_DWORD /d 1
+:: Set Windows Explorer components to run in separate processes avoiding system conflicts
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /f /v "DesktopProcess" /t REG_DWORD /d 1
+:: Close frozen processes to avoid system crashes
+reg add "HKCU\Control Panel\Desktop" /f /v "AutoEndTasks" /t REG_DWORD /d 1
+:: System Speedup
+:: Remove the word "shortcut" from the shortcut icons
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /f /v "link" /t REG_BINARY /d "00000000"
+:: Optimize Windows Explorer so that it can automatically restart after an exception occurs to prevent the system from being unresponsive.
+
+:: Optimize the visual effect of the menu and list to improve the operating speed of the system.
+
+:: Optimize refresh policy of Windows file list.
+
+:: Speed up display speed of Taskbar Window Previews.
+reg add "HKCU\Control Panel\Mouse" /f /v "MouseHoverTime" /t REG_SZ /d "100"
+:: Speed up Aero Snap to make thumbnail display faster.
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /f /v "link" /t REG_DWORD /d 0
+:: Optimized response speed of system display.
+reg add "HKCU\Control Panel\Desktop" /f /v "MenuShowDelay" /t REG_SZ /d 0
+:: Increase system icon cache and speed up desktop display.
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /f /v "Max Cached Icons" /t REG_SZ /d 4096
+:: Boost the response speed of foreground programs.
+reg add "HKCU\Control Panel\Desktop" /f /v "ForegroundLockTimeout" /t REG_DWORD /d 0
+:: Boost the display speed of Aero Peek.
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "DesktopLivePreviewHoverTime" /t REG_DWORD /d 0
+:: Disable memory pagination and reduce disk 1/0 to improve application performance. {Option may be ignored if physical memory is <1 GB)
+reg add "HKLM\SYSTEM\ControlSet001\Control\Session Manager\Memory Management" /f /v "DisablePagingExecutive" /t REG_DWORD /d 1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /f /v "DisablePagingExecutive" /t REG_DWORD /d 1
+:: Optimize processor performance for execution of applications, games, etc. {Ignore if server}
+reg add "HKLM\SYSTEM\ControlSet001\Control\PriorityControl" /f /v "Win32PrioritySeparation" /t REG_DWORD /d "38"
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /f /v "Win32PrioritySeparation" /t REG_DWORD /d "38"
+:: Close animation effect when maximizing or minimizing a window to speed up the window response.
+
+:: Disable the "Autoplay" feature on drives to avoid virus infection/propagation.
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "NoDriveTypeAutoRun" /t REG_DWORD /d "221"
+:: Optimize disk 1/0 subsystem to improve system performance.
+reg add "HKLM\SYSTEM\ControlSet001\Control\Session Manager" /f /v "AutoChkTimeout" /t REG_DWORD /d 5
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager" /f /v "AutoChkTimeout" /t REG_DWORD /d 5
+:: Optimize the file system to improve system performance.
+reg delete "HKLM\SYSTEM\ControlSet001\Control\FileSystem" /f /v "NtfsDisableLastAccessUpdate"
+reg delete "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /f /v "NtfsDisableLastAccessUpdate"
+reg add "HKLM\SYSTEM\ControlSet001\Control\FileSystem" /f /v "NtfsDisableLastAccessUpdate" /t REG_DWORD /d 2147483649
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /f /v "NtfsDisableLastAccessUpdate" /t REG_DWORD /d 2147483649
+:: Optimize front end components (dialog box, menus, etc.) appearance to improve system performance.
+
+:: Optimize memory default settings to improve system performance.
+reg add "HKLM\SYSTEM\ControlSet001\Control\Session Manager\Memory Management" /f /v "IoPageLockLimit" /t REG_DWORD /d "134217728"
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /f /v "IoPageLockLimit" /t REG_DWORD /d "134217728"
+:: Disable the debugger to speed up error processing.
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug" /f /v "Auto" /t REG_SZ /d 0
+:: Disable screen error reporting to improve system performance.
+reg add "HKLM\SOFTWARE\Microsoft\PCHealth\ErrorReporting" /f /v "ShowUI" /t REG_DWORD /d 0
+reg add "HKLM\SOFTWARE\Microsoft\PCHealth\ErrorReporting" /f /v "DoReport" /t REG_DWORD /d 0
+:: Network Speedup
+:: Optimize LAN connection.
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "nonetcrawling" /t REG_DWORD /d 1
+:: Optimize DNS and DNS parsing speed.
+reg add "HKLM\SYSTEM\ControlSet001\Services\Dnscache\Parameters" /f /v "maxnegativecachettl" /t REG_DWORD /d 0
+reg add "HKLM\SYSTEM\ControlSet001\Services\Dnscache\Parameters" /f /v "maxcachettl" /t REG_DWORD /d "10800"
+reg add "HKLM\SYSTEM\ControlSet001\Services\Dnscache\Parameters" /f /v "maxcacheentryttllimit" /t REG_DWORD /d "10800"
+reg add "HKLM\SYSTEM\ControlSet001\Services\Dnscache\Parameters" /f /v "netfailurecachetime" /t REG_DWORD /d "0"
+reg add "HKLM\SYSTEM\ControlSet001\Services\Dnscache\Parameters" /f /v "negativesoacachetime" /t REG_DWORD /d "0"
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /f /v "maxnegativecachettl" /t REG_DWORD /d 0
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /f /v "maxcachettl" /t REG_DWORD /d "10800"
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /f /v "maxcacheentryttllimit" /t REG_DWORD /d "10800"
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /f /v "netfailurecachetime" /t REG_DWORD /d "0"
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /f /v "negativesoacachetime" /t REG_DWORD /d "0"
+:: Optimize Ethernet card performance.
+reg add "HKLM\SYSTEM\ControlSet001\Services\Tcpip\Parameters" /f /v "MaxConnectionsPerServer" /t REG_DWORD /d 0
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /f /v "MaxConnectionsPerServer" /t REG_DWORD /d 0
+:: Optimize network forward ability to improve network performance.
+reg add "HKLM\SYSTEM\ControlSet001\Control\Nsi\{eb004a03-9b1a-11d4-9123-0050047759bc}\0" /f /v "0200" /t REG_BINARY /d "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff"
+reg add "HKLM\SYSTEM\ControlSet001\Services\Tcpip\Parameters" /f /v "Tcp1323Opts" /t REG_DWORD /d "1"
+reg add "HKLM\SYSTEM\ControlSet001\Services\Tcpip\Parameters" /f /v "SackOpts" /t REG_DWORD /d "1"
+reg add "HKLM\SYSTEM\ControlSet001\Services\Tcpip\Parameters" /f /v "TcpMaxDupAcks" /t REG_DWORD /d "2"
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Nsi\{eb004a03-9b1a-11d4-9123-0050047759bc}\0" /f /v "0200" /t REG_BINARY /d "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff"
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /f /v "Tcp1323Opts" /t REG_DWORD /d "1"
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /f /v "SackOpts" /t REG_DWORD /d "1"
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /f /v "TcpMaxDupAcks" /t REG_DWORD /d "2"
+:: Optimize network settings to improve communication performance.
+reg add "HKLM\SYSTEM\ControlSet001\Services\LanmanWorkstation\Parameters" /f /v "MaxCollectionCount" /t REG_DWORD /d "32"
+reg add "HKLM\SYSTEM\ControlSet001\Services\LanmanWorkstation\Parameters" /f /v "MaxThreads" /t REG_DWORD /d "30"
+reg add "HKLM\SYSTEM\ControlSet001\Services\LanmanWorkstation\Parameters" /f /v "MaxCmds" /t REG_DWORD /d "30"
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" /f /v "MaxCollectionCount" /t REG_DWORD /d "32"
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" /f /v "MaxThreads" /t REG_DWORD /d "30"
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" /f /v "MaxCmds" /t REG_DWORD /d "30"
+:: Optimize WINS name query time to improve data transfer speed.
+reg add "HKLM\SYSTEM\ControlSet001\Services\Tcpip\Parameters" /v "NameSrvQueryTimeout" /f /t REG_DWORD /d "3000"
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "NameSrvQueryTimeout" /f /t REG_DWORD /d "3000"
+:: Improve TCP/IP performance through automatic detection of "black holes" in routing at Path MTU Discovery technique.
+reg add "HKLM\SYSTEM\ControlSet001\Services\Tcpip\Parameters" /v "EnablePMTUDiscovery" /f /t REG_DWORD /d "1"
+reg add "HKLM\SYSTEM\ControlSet001\Services\Tcpip\Parameters" /v "EnablePMTUBHDetect" /f /t REG_DWORD /d "1"
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "EnablePMTUDiscovery" /f /t REG_DWORD /d "1"
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "EnablePMTUBHDetect" /f /t REG_DWORD /d "1"
+reg add "HKLM\SYSTEM\ControlSet001\Control\Nsi\{eb004a03-9b1a-11d4-9123-0050047759bc}\0" /f /v "0200" /t REG_BINARY /d "010000010000000000000000000000000000000000000000000000000000ff0000ff00000000000000000000000000000000000000000000000000ff"
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Nsi\{eb004a03-9b1a-11d4-9123-0050047759bc}\0" /f /v "0200" /t REG_BINARY /d "010000010000000000000000000000000000000000000000000000000000ff0000ff00000000000000000000000000000000000000000000000000ff"
+:: Optimize TTL {Time To Live) settings to improve network performance.
+reg add "HKLM\SYSTEM\ControlSet001\Services\Tcpip\Parameters" /f /v "DefaultTTL" /t REG_DWORD /d "64"
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /f /v "DefaultTTL" /t REG_DWORD /d "64"
+reg add "HKLM\SYSTEM\ControlSet001\Control\Nsi\{eb004a00-9b1a-11d4-9123-0050047759bc}\6" /f /ve /t REG_BINARY /d "000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffffffff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff"
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Nsi\{eb004a00-9b1a-11d4-9123-0050047759bc}\6" /f /ve /t REG_BINARY /d "000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffffffff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff"
+:: SSD optimize
+:: Disable drive defrag system on boot to extend lifespan of SSD.
+reg add "HKLM\SOFTWARE\Microsoft\Dfrg\BootOptimizeFunction" /f /v "Enable" /t REG_SZ /d "n"
+:: Disable auto defrag when idle to extend lifespan of SSD.
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\OptimalLayout" /f /v "EnableAutoLayout" /t REG_DWORD /d "0"
+:: Disable prefetch parameters to extend lifespan of SSD.
+reg add "HKLM\SYSTEM\ControlSet001\Control\Session Manager\Memory Management\PrefetchParameters" /f /v "EnablePrefetcher" /t REG_DWORD /d "0"
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /f /v "EnablePrefetcher" /t REG_DWORD /d "0"
+:: Enable TRIM function to improve working performance of SSD.
+
 
 taskkill /f /im explorer.exe
 
