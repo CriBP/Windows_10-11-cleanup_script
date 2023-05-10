@@ -1,4 +1,4 @@
-#This function finds any AppX/AppXProvisioned package and uninstalls it, except for Freshpaint, Windows Calculator, Windows Store, and Windows Photos.
+#This function finds any AppX/AppXProvisioned package and uninstalls it, with a few exceptions Whitelisted below.
 #Scripts may be blocked in the system, to get status: Get-ExecutionPolicy -List
 #In order to run this script we need to Enable PowerShell execution: Set-ExecutionPolicy Unrestricted -Force
 
@@ -38,19 +38,12 @@ Write-Verbose -Message ('Starting Sysprep Fixes')
 New-PSDrive -Name HKCR -PSProvider Registry -Root HKEY_CLASSES_ROOT
 
 # view a list of installed apps:
-Get-AppxPackage –AllUsers | Select Name, PackageFullName
-Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion, Publisher, InstallDate | Format-Table –AutoSize
+Get-AppxPackage -AllUsers | Select Name, PackageFullName
+Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion, Publisher, InstallDate | Format-Table -AutoSize
 
 Write-Output "Removing bloatware apps."
-#Credit to Reddit user /u/GavinEke for a modified version of my whitelist code
-[regex]$WhitelistedApps = 'Microsoft.ScreenSketch|Microsoft.WindowsCalculator|Microsoft.WindowsStore|Microsoft.Windows.Photos|CanonicalGroupLimited.UbuntuonWindows|`
-Microsoft.MSPaint|Microsoft.WindowsCamera|.NET|Framework|Microsoft.HEIFImageExtension|Microsoft.ScreenSketch|Microsoft.StorePurchaseApp|Microsoft.AccountsControl|`
-Microsoft.VP9VideoExtensions|Microsoft.WebMediaExtensions|Microsoft.WebpImageExtension|Microsoft.Windows.Search|Windows.PrintDialog|Microsoft.WindowsTerminal|`
-Microsoft.Win32WebViewHost|Microsoft.Windows.CapturePicker|windows.immersivecontrolpanel|Microsoft.NET.Native|Microsoft.DesktopAppInstaller|`
-Microsoft.HEVCVideoExtension|Microsoft.MicrosoftStickyNotes|Microsoft.Paint|Microsoft.RawImageExtension|Microsoft.ScreenSketch|`
-Microsoft.WindowsNotepad|Microsoft.WindowsSoundRecorder|Microsoft.Windows.ShellExperienceHost|MicrosoftWindows.Client.Core|Microsoft.VCLibs|Microsoft.UI.Xaml'
-Get-AppxPackage -AllUsers | Where-Object {$_.Name -NotMatch $WhitelistedApps} | Remove-AppxPackage -ErrorAction Continue
-# Run this again to avoid error on 1803 or having to reboot.
+[regex]$WhitelistedApps ='Microsoft.VP9VideoExtensions|Microsoft.NET.Native|Microsoft.HEVCVideoExtension|Microsoft.MicrosoftStickyNotes|Microsoft.Paint|Microsoft.RawImageExtension|Microsoft.WindowsNotepad|Microsoft.WindowsSoundRecorder|Microsoft.LanguageExperiencePackro-RO|Microsoft.AAD.BrokerPlugin|Microsoft.AccountsControl|Microsoft.AsyncTextService|Microsoft.BioEnrollment|Microsoft.CredDialogHost|Microsoft.ECApp|Microsoft.LockApp|Microsoft.UI.Xaml.CBS|Microsoft.Win32WebViewHost|Microsoft.Windows.Apprep.ChxApp|Microsoft.Windows.CallingShellApp|Microsoft.Windows.CapturePicker|Microsoft.Windows.CloudExperienceHost|Microsoft.Windows.ContentDeliveryManager|Microsoft.Windows.FileExplorer|Microsoft.Windows.NarratorQuickStart|Microsoft.Windows.OOBENetworkCaptivePortal|Microsoft.Windows.OOBENetworkConnectionFlow|Microsoft.Windows.ParentalControls|Microsoft.Windows.PeopleExperienceHost|Microsoft.Windows.PinningConfirmationDialog|Microsoft.Windows.Search|Microsoft.Windows.ShellExperienceHost|Microsoft.Windows.XGpuEjectDialog|MicrosoftWindows.UndockedDevKit|NcsiUwpApp|windows.immersivecontrolpanel|Windows.PrintDialog|Microsoft.NET.Native|Microsoft.UI.Xaml|Microsoft.VCLibs|Microsoft.Windows.StartMenuExperienceHost|Microsoft.WebMediaExtensions|Microsoft.WebpImageExtension|Microsoft.WindowsCalculator|Microsoft.DesktopAppInstaller|Microsoft.WindowsTerminal|Microsoft.HEIFImageExtension|Microsoft.Windows.Photos|Microsoft.WindowsStore|Microsoft.ScreenSketch|Microsoft.WindowsCamera|Microsoft.Winget.Source'
+Get-AppxPackage -AllUsers | Where-Object {$_.Name -Match $WhitelistedApps} | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"} -ErrorAction Continue
 Get-AppxPackage -AllUsers | Where-Object {$_.Name -NotMatch $WhitelistedApps} | Remove-AppxPackage -ErrorAction Continue
 $AppxRemoval = Get-AppxProvisionedPackage -Online | Where-Object {$_.PackageName -NotMatch $WhitelistedApps} 
 ForEach ( $App in $AppxRemoval) {
@@ -58,65 +51,13 @@ Remove-AppxProvisionedPackage -Online -PackageName $App.PackageName
 Get-AppxPackage | Where-Object {$_.Name -NotMatch $WhitelistedApps} | Remove-AppxPackage
 }
 
-Write-Output "Checking to see if any Whitelisted Apps were removed, and if so re-adding them."
-#This includes fixes by xsisbest
-If(!(Get-AppxPackage -AllUsers | Select Microsoft.MSPaint, Microsoft.WindowsCalculator, Microsoft.WindowsStore, Microsoft.WindowsSoundRecorder, Microsoft.Windows.Photos, Microsoft.WindowsTerminal)) {
-Get-AppxPackage -allusers Microsoft.MSPaint | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"}
-Get-AppxPackage -allusers Microsoft.WindowsCalculator | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"}
-Get-AppxPackage -allusers Microsoft.WindowsStore | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"}
-Get-AppxPackage -allusers Microsoft.WindowsSoundRecorder | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"}
-Get-AppxPackage -allusers Microsoft.Windows.Photos | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"} }
-Write-Output "White listed Apps Fixed"
+# To restore all Apps use: Get-AppxPackage -AllUsers| Foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"}
 Write-Output "All Apps remaining:..."
 Get-AppxPackage -AllUsers | Select Name, PackageFullName
-
-Write-Output "Setting Mixed Reality Portal value to 0 so that you can uninstall it in Settings"
-$Holo = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Holographic'
-If (Test-Path $Holo) {
-Set-ItemProperty $Holo -Name FirstRunSucceeded -Value 0 -Verbose
-}
-
-#Uninstall Edge
-$EdgeVersion = (Get-AppxPackage "Microsoft.MicrosoftEdge.Stable" -AllUsers).Version
-$EdgeLstVersion=$EdgeVersion[-1]
-$EdgeSetupPath = ${env:ProgramFiles(x86)} + '\Microsoft\Edge\Application\' + $EdgeLstVersion
-
-
-#Stopping Edge from taking over as the default PDF Viewer.
-Write-Output "Stopping Edge from taking over as the default PDF Viewer."
-Get-AppxPackage *Edge* | Remove-AppxPackage
-$FileBrowser = New-Object System.Windows.Forms.OpenFileDialog -Property @{ 
-InitialDirectory = [Environment]::GetFolderPath('CommonProgramFilesX86''\Microsoft\Edge\Application\') 
-Filter = 'executable (*.exe)'
-}
-$null = $FileBrowser.ShowDialog('setup.exe --uninstall --system-level --verbose-logging --force-uninstall')
-$NoPDF = "HKCR:\.pdf"
-$NoProgids = "HKCR:\.pdf\OpenWithProgids"
-$NoWithList = "HKCR:\.pdf\OpenWithList" 
-If (!(Get-ItemProperty $NoPDF  NoOpenWith)) {
-New-ItemProperty $NoPDF NoOpenWith 
-}
-If (!(Get-ItemProperty $NoPDF  NoStaticDefaultVerb)) {
-New-ItemProperty $NoPDF  NoStaticDefaultVerb 
-}
-If (!(Get-ItemProperty $NoProgids  NoOpenWith)) {
-New-ItemProperty $NoProgids  NoOpenWith 
-}
-If (!(Get-ItemProperty $NoProgids  NoStaticDefaultVerb)) {
-New-ItemProperty $NoProgids  NoStaticDefaultVerb 
-}
-If (!(Get-ItemProperty $NoWithList  NoOpenWith)) {
-New-ItemProperty $NoWithList  NoOpenWith
-}
-If (!(Get-ItemProperty $NoWithList  NoStaticDefaultVerb)) {
-New-ItemProperty $NoWithList  NoStaticDefaultVerb 
-}
-
-#Appends an underscore '_' to the Registry key for Edge
-$Edge = "HKCR:\AppXd4nrz8ff68srnhf9t5a8sbjyar1cr723"
-If (Test-Path $Edge) {
-Set-Item $Edge AppXd4nrz8ff68srnhf9t5a8sbjyar1cr723_ 
-}
+# Update all Apps
+Add-AppxPackage -RegisterByFamilyName -MainPackage Microsoft.DesktopAppInstaller_8wekyb3d8bbwe
+winget upgrade
+winget upgrade --accept-source-agreements --all --include-unknown
 
 #Cleanup Start Menu
 Write-Output "Cleaning up the Start Menu Apps"
@@ -129,24 +70,29 @@ $START_MENU_LAYOUT = @"
     <StartLayoutCollection>
       <defaultlayout:StartLayout GroupCellWidth="6">
         <start:Group Name="Productivity">
-          <start:DesktopApplicationTile Size="2x2" Column="4" Row="2" DesktopApplicationLinkPath="%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Word.lnk" />
+          <start:DesktopApplicationTile Size="2x2" Column="0" Row="0" DesktopApplicationLinkPath="%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Accessories\Notepad.lnk" />
+          <start:DesktopApplicationTile Size="2x2" Column="0" Row="2" DesktopApplicationLinkPath="%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Accessories\Snipping Tool.lnk" />
+          <start:DesktopApplicationTile Size="2x2" Column="0" Row="4" DesktopApplicationLinkPath="%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\PowerPoint.lnk" />
           <start:DesktopApplicationTile Size="2x2" Column="2" Row="0" DesktopApplicationLinkPath="%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Accessories\Paint.lnk" />
           <start:DesktopApplicationTile Size="2x2" Column="2" Row="2" DesktopApplicationLinkPath="%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Accessories\Wordpad.lnk" />
-          <start:Tile Size="2x2" Column="4" Row="0" AppUserModelID="Microsoft.WindowsCalculator_8wekyb3d8bbwe!App" />
-          <start:DesktopApplicationTile Size="2x2" Column="4" Row="4" DesktopApplicationLinkPath="%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Publisher.lnk" />
-          <start:DesktopApplicationTile Size="2x2" Column="0" Row="4" DesktopApplicationLinkPath="%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\PowerPoint.lnk" />
-          <start:DesktopApplicationTile Size="2x2" Column="0" Row="0" DesktopApplicationLinkPath="%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Accessories\Notepad.lnk" />
           <start:DesktopApplicationTile Size="2x2" Column="2" Row="4" DesktopApplicationLinkPath="%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Excel.lnk" />
-          <start:DesktopApplicationTile Size="2x2" Column="0" Row="2" DesktopApplicationLinkPath="%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Accessories\Snipping Tool.lnk" />
+          <start:Tile Size="2x2" Column="4" Row="0" AppUserModelID="Microsoft.WindowsCalculator_8wekyb3d8bbwe!App" />
+          <start:DesktopApplicationTile Size="2x2" Column="4" Row="2" DesktopApplicationLinkPath="%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Word.lnk" />
+          <start:DesktopApplicationTile Size="2x2" Column="4" Row="4" DesktopApplicationLinkPath="%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Publisher.lnk" />
         </start:Group>
-        <start:Group Name="Explore">
-          <start:DesktopApplicationTile Size="2x2" Column="0" Row="0" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\BPBiblePortable.lnk" />
-          <start:DesktopApplicationTile Size="2x2" Column="4" Row="0" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\GoogleChromePortable.lnk" />
-          <start:DesktopApplicationTile Size="2x2" Column="0" Row="2" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\MuseScorePortable.lnk" />
-          <start:DesktopApplicationTile Size="2x2" Column="2" Row="2" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\VLCPortable.lnk" />
-          <start:DesktopApplicationTile Size="2x2" Column="4" Row="2" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\TeamViewerPortable.lnk" />
-          <start:DesktopApplicationTile Size="2x2" Column="2" Row="0" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\FirefoxPortable.lnk" />
-          <start:DesktopApplicationTile Size="2x2" Column="0" Row="4" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\Start.lnk" />
+        <start:Group Name="Portable">
+          <start:DesktopApplicationTile Size="2x2" Column="0" Row="0" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\LibreOfficeWriterPortable.lnk" />
+          <start:DesktopApplicationTile Size="2x2" Column="0" Row="2" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\Start.lnk" />
+          <start:DesktopApplicationTile Size="2x2" Column="0" Row="4" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\BPBiblePortable.lnk" />
+          <start:DesktopApplicationTile Size="2x2" Column="0" Row="6" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\AnyDesk.lnk" />
+          <start:DesktopApplicationTile Size="2x2" Column="2" Row="0" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\LibreOfficeCalcPortable.lnk" />
+          <start:DesktopApplicationTile Size="2x2" Column="2" Row="2" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\FirefoxPortable.lnk" />
+          <start:DesktopApplicationTile Size="2x2" Column="2" Row="4" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\VLCPortable.lnk" />
+          <start:DesktopApplicationTile Size="2x2" Column="2" Row="6" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\rustdesk-1.1.9.lnk" />
+          <start:DesktopApplicationTile Size="2x2" Column="4" Row="0" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\LibreOfficeImpressPortable.lnk" />
+          <start:DesktopApplicationTile Size="2x2" Column="4" Row="2" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\GoogleChromePortable.lnk" />
+          <start:DesktopApplicationTile Size="2x2" Column="4" Row="4" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\TelegramDesktopPortable.lnk" />
+          <start:DesktopApplicationTile Size="2x2" Column="4" Row="6" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\TeamViewerPortable.lnk" />
         </start:Group>
       </defaultlayout:StartLayout>
     </StartLayoutCollection>
