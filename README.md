@@ -33,4 +33,5 @@ Important Notes:
     - Wise Registry Cleaner
     - PrivaZer
     - ccPortable
+
 -"FileTypes" is just a collection of example files that helps with File Association
