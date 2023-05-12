@@ -393,9 +393,6 @@ reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandler
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "NoDriveTypeAutoRun" /t REG_DWORD /d "255"
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "NoDriveTypeAutoRun" /t REG_DWORD /d "255"
 
-:: DFS Share Refresh Issue - https://wiki.ledhed.net/index.php/DFS_Share_Refresh_Issue
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "NoSimpleNetIDList" /t REG_DWORD /d 1
-
 :: Disable Low Disk Space Checks in Windows - https://www.lifewire.com/how-to-disable-low-disk-space-checks-in-windows-vista-2626331
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "NoLowDiskSpaceChecks" /t REG_DWORD /d 1
 
@@ -942,9 +939,9 @@ reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /f /v "link" /
 :: Optimize Windows Explorer so that it can automatically restart after an exception occurs to prevent the system from being unresponsive.
 
 :: Optimize the visual effect of the menu and list to improve the operating speed of the system.
-
-:: Optimize refresh policy of Windows file list.
-
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "ListviewAlphaSelect" /t REG_DWORD /d 0
+:: Optimize refresh policy of Windows file list - DFS Share Refresh Issue - https://wiki.ledhed.net/index.php/DFS_Share_Refresh_Issue
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "NoSimpleNetIDList" /t REG_DWORD /d 1
 :: Speed up display speed of Taskbar Window Previews.
 reg add "HKCU\Control Panel\Mouse" /f /v "MouseHoverTime" /t REG_SZ /d "100"
 :: Speed up Aero Snap to make thumbnail display faster.
@@ -964,7 +961,7 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management
 reg add "HKLM\SYSTEM\ControlSet001\Control\PriorityControl" /f /v "Win32PrioritySeparation" /t REG_DWORD /d "38"
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /f /v "Win32PrioritySeparation" /t REG_DWORD /d "38"
 :: Close animation effect when maximizing or minimizing a window to speed up the window response.
-
+reg add "HKCU\Control Panel\Desktop\WindowMetrics" /f /v "MinAnimate" /t REG_SZ /d "0"
 :: Disable the "Autoplay" feature on drives to avoid virus infection/propagation.
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "NoDriveTypeAutoRun" /t REG_DWORD /d "221"
 :: Optimize disk 1/0 subsystem to improve system performance.
@@ -976,7 +973,7 @@ reg delete "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /f /v "NtfsDisable
 reg add "HKLM\SYSTEM\ControlSet001\Control\FileSystem" /f /v "NtfsDisableLastAccessUpdate" /t REG_DWORD /d 2147483649
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /f /v "NtfsDisableLastAccessUpdate" /t REG_DWORD /d 2147483649
 :: Optimize front end components (dialog box, menus, etc.) appearance to improve system performance.
-
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "TaskbarAnimations" /t REG_DWORD /d 0
 :: Optimize memory default settings to improve system performance.
 reg add "HKLM\SYSTEM\ControlSet001\Control\Session Manager\Memory Management" /f /v "IoPageLockLimit" /t REG_DWORD /d "134217728"
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /f /v "IoPageLockLimit" /t REG_DWORD /d "134217728"
