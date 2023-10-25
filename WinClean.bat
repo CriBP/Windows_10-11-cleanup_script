@@ -33,31 +33,6 @@ del /f /s /q /a "%AppData%\Microsoft\Windows\Recent\AutomaticDestinations\f01b4d
 :: Increase the number of recent files displayed in the task bar
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "JumpListItems_Maximum " /t REG_DWORD /d 30
 
-:: Change Recent items List: The folders are defined in the registry under: HKLM\Sofware\Classes\CLSID - CLSID Items in folder:
-:: {22877a6d-37a1-461a-91b0-dbda5aaebc99} 	Recent folders
-:: {3936E9E4-D92C-4EEE-A85A-BC16D5EA0819} 	Frequent folders
-:: {4564b25e-30cd-4787-82ba-39e73a750b14} 	Recent files
-:: Since these are already defined, only two things are required for the folders to appear in the Navigation Pane. THe folder needs to be added to the Desktop Namespace by creating a CLSID-named subkey under: HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\Namespace and a DWORD named System.ISPinnedToNamespaceTree with a value of 1 needs to be added to the base key.
-reg add "HKCU\SOFTWARE\Classes\CLSID\{4564b25e-30cd-4787-82ba-39e73a750b14}" /f /v "System.IsPinnedToNamespaceTree" /t REG_DWORD /d "1"
-reg add "HKCU\SOFTWARE\Classes\CLSID\{4564b25e-30cd-4787-82ba-39e73a750b14}" /f /v "LocalizedString" /t REG_SZ /d "Recent files"
-reg add "HKCU\SOFTWARE\Classes\CLSID\{4564b25e-30cd-4787-82ba-39e73a750b14}" /f /ve /t REG_SZ /d "Recent Items Instance Folder"
-reg add "HKCU\SOFTWARE\Classes\CLSID\{4564b25e-30cd-4787-82ba-39e73a750b14}" /f /v "InfoTip" /t REG_SZ /d "Extended list of recent files"
-reg add "HKCU\SOFTWARE\Classes\CLSID\{4564b25e-30cd-4787-82ba-39e73a750b14}" /f /v "System.HideOnDesktopPerUser" /t REG_SZ /d ""
-reg add "HKCU\SOFTWARE\Classes\CLSID\{4564b25e-30cd-4787-82ba-39e73a750b14}\DefaultIcon" /f /ve /t REG_EXPAND_SZ /d "%%SystemRoot%%\system32\imageres.dll,-117"
-reg add "HKCU\SOFTWARE\Classes\CLSID\{4564b25e-30cd-4787-82ba-39e73a750b14}\Instance\InitPropertyBag" /f /v "MaxItems" /t REG_DWORD /d "50"
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{4564b25e-30cd-4787-82ba-39e73a750b14}" /f /ve /t REG_SZ /d "Recent files (extended)"
-:: A value of '1' hides the icon on the Desktop; a value of `0` displays it.
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel" /f /v "{4564b25e-30cd-4787-82ba-39e73a750b14}" /t REG_DWORD /d "1"
-:: add Recent folders
-reg add "HKCU\SOFTWARE\Classes\CLSID\{22877a6d-37a1-461a-91b0-dbda5aaebc99}" /f /ve /t REG_SZ /d "Recent folders"
-reg add "HKCU\SOFTWARE\Classes\CLSID\{22877a6d-37a1-461a-91b0-dbda5aaebc99}" /f /v "System.IsPinnedToNamespaceTree" /t REG_DWORD /d "1"
-reg add "HKCU\SOFTWARE\Classes\CLSID\{22877a6d-37a1-461a-91b0-dbda5aaebc99}" /f /v "InfoTip" /t REG_SZ /d "Extended list of recent folders"
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{22877a6d-37a1-461a-91b0-dbda5aaebc99}" /f /ve /t REG_SZ /d "Recent folders (extended)"
-:: A value of '1' hides the icon on the Desktop; a value of `0` displays it.
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel" /f /v "{22877a6d-37a1-461a-91b0-dbda5aaebc99}" /t REG_DWORD /d "1"
-:: Icons Layout
-reg add "HKCU\SOFTWARE\Microsoft\Windows\Shell\Bags\1\Desktop" /f /v "IconLayouts" /t REG_BINARY /d "0000000000000000000000000000000003000100010001000c000000000000002c000000000000003a003a007b00350039003000330031004100340037002d0033004600370032002d0034003400410037002d0038003900430035002d003500350039003500460045003600420033003000450045007d003e005c00200000002c000000000000003a003a007b00360034003500460046003000340030002d0035003000380031002d0031003000310042002d0039004600300038002d003000300041004100300030003200460039003500340045007d003e002000200000002c000000000000003a003a007b00340035003600340042003200350045002d0033003000430044002d0034003700380037002d0038003200420041002d003300390045003700330041003700350030004200310034007d003e002000200000002c000000000000003a003a007b00320032003800370037004100360044002d0033003700410031002d0034003600310041002d0039003100420030002d004400420044004100350041004100450042004300390039007d003e002000200000001200000000000000450061007300790073006c0069006400650073002e006c006e006b003e0020007c0000001c000000000000004d00750073006900630020004d0061006b006500720020002800360034002d0042006900740029002e006c006e006b003e0020007c000000290000000000000053004f0055004e004400200046004f00520047004500200041007500640069006f002000530074007500640069006f002000310035002000280078003600340029002e006c006e006b003e0020007c0000001c0000000000000053006f0075006e006400200046006f007200670065002000500072006f002000310030002e0030002e006c006e006b003e0020007c0000001600000000000000560045004700410053002000500072006f002000310039002e0030002e006c006e006b003e0020007c0000001400000000000000560045004700410053002000530074007200650061006d002e006c006e006b003e0020007c0000000f000000000000006400650073006b0074006f0070002e0069006e0069003e0020007c0000000f000000000000006400650073006b0074006f0070002e0069006e0069003e00200020000000010000000000000002000100000000000000000001000000000000000200010000000000000000002200000010000000010000000c0000000000000000000000000000000000000000000000803f0100000000000000004002000000000000004040030000000000000080400400000000000000a0400500000000000000c0400600000000000000e0400700000000000000004108000000000000001041090000000000000020410a0000000000000030410b00"
-
 :: Setting Mixed Reality Portal value to 0 so that you can uninstall it in Settings
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Holographic" /f /v "FirstRunSucceeded " /t REG_DWORD /d 0
 
@@ -796,8 +771,6 @@ schtasks /Change /TN "\Microsoft\Windows\Workplace Join\Recovery-Check" /disable
 :: This task will automatically upload a roaming user profile's registry hive to its network location.
 schtasks /Change /TN "\Microsoft\Windows\User Profile Service\HiveUploadTask" /disable
 
-
-
 :: Removing Telemetry and other unnecessary services:
 :: Connected User Experience and Telemetry component, also known as the Universal Telemetry Client (UTC)...
 sc stop DiagTrack
@@ -809,13 +782,13 @@ sc delete dmwappushservice
 sc stop WerSvc
 sc delete WerSvc
 :: Synchronize mail, contacts, calendar and various other user data...
-sc stop OneSyncSvc
-sc config "OneSyncSvc" start=demand
-wmic service where "name like 'OneSyncSvc%%%'" call stopservice
+:: sc stop OneSyncSvc
+:: sc config "OneSyncSvc" start=demand
+:: wmic service where "name like 'OneSyncSvc%%%'" call stopservice
 
-wmic service where "name like 'OneSyncSvc%%%'" call ChangeStartMode StartMode=manual
+:: wmic service where "name like 'OneSyncSvc%%%'" call ChangeStartMode StartMode=manual
 :: Service supporting text messaging and related functionality...
-sc stop MessagingService
+:: sc stop MessagingService
 :: Problem Reports and Solutions Control Panel Support...
 sc stop wercplsupport
 sc config "wercplsupport" start=disabled
@@ -839,11 +812,11 @@ wmic service where "name like 'BcastDVR%%%'" call stopservice
 
 wmic service where "name like 'BcastDVR%%%'" call ChangeStartMode StartMode=disabled
 :: BitLocker Drive Encryption Service
-sc stop BDESVC
-sc config "BDESVC" start=demand
+:: sc stop BDESVC
+:: sc config "BDESVC" start=demand
 :: Internet Connection Sharing (ICS)
-sc stop SharedAccess
-sc config "SharedAccess" start=demand
+:: sc stop SharedAccess
+:: sc config "SharedAccess" start=demand
 :: Parental Controls
 sc stop WpcMonSvc
 sc config "WpcMonSvc" start=disabled
@@ -854,52 +827,51 @@ sc config "PhoneSvc" start=demand
 sc stop Fax
 sc config "Fax" start=demand
 :: Remote Registry
-sc stop RemoteRegistry
-sc config "RemoteRegistry" start=disabled
+:: sc stop RemoteRegistry
+:: sc config "RemoteRegistry" start=disabled
 :: TCP/IP NetBIOS Helper
-sc stop lmhosts
-sc config "lmhosts" start=demand
+:: sc stop lmhosts
+:: sc config "lmhosts" start=demand
 :: Touch Keyboard and Handwriting Panel Service
-sc stop TabletInputService
-sc config "TabletInputService" start=demand
+:: sc stop TabletInputService
+:: sc config "TabletInputService" start=demand
 :: Windows Image Acquisition (WIA)
-sc stop stisvc
-sc config "stisvc" start=demand
+:: sc stop stisvc
+:: sc config "stisvc" start=demand
 :: Wallet Service - Hosts objects used by clients of the wallet
-sc stop WalletService
-sc config "WalletService" start=demand
+:: sc stop WalletService
+:: sc config "WalletService" start=demand
 :: AllJoyn Router Service — This is a service that lets you connect Windows to the Internet of Things and communicate with devices such as smart TVs, refrigerators, light bulbs, thermostats, etc.
-sc stop AJRouter
-sc config "AJRouter" start=demand
+:: sc stop AJRouter
+:: sc config "AJRouter" start=demand
 :: Program Compatibility Assistant Service - This service provides support for the Program Compatibility Assistant (PCA).
-sc stop PcaSvc
-sc config "PcaSvc" start=demand
+:: sc stop PcaSvc
+:: sc config "PcaSvc" start=demand
 :: Portable Device Enumerator Service — This service is needed for making group policy changes for removable drives and to synchronize content for applications like Windows Media Player and Image Import Wizard on the removable drive.
-sc stop WPDBusEnum
-sc config "WPDBusEnum" start=demand
+:: sc stop WPDBusEnum
+:: sc config "WPDBusEnum" start=demand
 :: Network connection broker — This service brokers connections and allows Microsoft Store apps to get notifications from the internet.
-sc stop NcbService
-sc config "NcbService" start=demand
+:: sc stop NcbService
+:: sc config "NcbService" start=demand
 :: Windows event log — Similar to number 23, this service allows logs to be generated about Windows events such as querying, subscribing to, and archiving events.
-sc stop EventLog
-sc config "EventLog" start=demand
+:: sc stop EventLog
+:: sc config "EventLog" start=demand
 :: Smart Card (and related services) — These services let Windows use smart cards that are required for security purposes in corporations and large organizations.
-sc stop SCardSvr
-sc config "SCardSvr" start=demand
-sc stop ScDeviceEnum
-sc config "ScDeviceEnum" start=demand
-sc stop SCPolicySvc
-sc config "SCPolicySvc" start=demand
+:: sc stop SCardSvr
+:: sc config "SCardSvr" start=demand
+:: sc stop ScDeviceEnum
+:: sc config "ScDeviceEnum" start=demand
+:: sc stop SCPolicySvc
+:: sc config "SCPolicySvc" start=demand
 :: Certificate Propagation - Copies user certificates and root certificates from smart cards
-sc stop CertPropSvc
-sc config "CertPropSvc" start=demand
+:: sc stop CertPropSvc
+:: sc config "CertPropSvc" start=demand
 :: Enterprise App Management Service — This service is only needed to manage enterprise apps that are provided by organizations and companies.
-sc stop EntAppSvc
-sc config "EntAppSvc" start=demand
+:: sc stop EntAppSvc
+:: sc config "EntAppSvc" start=demand
 :: Netlogon — This is another network service that helps establish and secure channels between a computer and the domain controller.
-sc stop Netlogon
-sc config "Netlogon" start=demand
-
+:: sc stop Netlogon
+:: sc config "Netlogon" start=demand
 
 :: Preventing Windows from re-enabling Telemetry services...
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\DiagTrack" /f /v "Start" /t REG_DWORD /d 4
