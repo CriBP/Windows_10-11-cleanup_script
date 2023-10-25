@@ -312,6 +312,10 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /f /v "LimitBlankPasswordUse
 :: Enable Local Security Authority Protection...
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /f /v RunAsPPL /t REG_DWORD /d 1
 
+:: Enable Windows Credential Save and reuse...
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DeviceGuard" /f /v LsaCfgFlags /t REG_DWORD /d 0
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /f /v LsaCfgFlags /t REG_DWORD /d 0
+
 :: Disable Windows Feedback...
 reg add "HKCU\SOFTWARE\Microsoft\Siuf\Rules" /f /v "NumberOfSIUFInPeriod" /t REG_DWORD /d 0
 reg delete "HKCU\SOFTWARE\Microsoft\Siuf\Rules" /f /v "PeriodInNanoSeconds"
