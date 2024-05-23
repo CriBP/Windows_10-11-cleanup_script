@@ -42,13 +42,36 @@ Get-AppxPackage -AllUsers | Select Name, PackageFullName
 Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion, Publisher, InstallDate | Format-Table -AutoSize
 
 Write-Output "Removing bloatware apps."
-[regex]$WhitelistedApps ='Microsoft.VP9VideoExtensions|Microsoft.NET.Native|Microsoft.HEVCVideoExtension|Microsoft.MicrosoftStickyNotes|Microsoft.Paint|Microsoft.RawImageExtension|Microsoft.WindowsNotepad|Microsoft.WindowsSoundRecorder|Microsoft.LanguageExperiencePackro-RO|Microsoft.AAD.BrokerPlugin|Microsoft.AccountsControl|Microsoft.AsyncTextService|Microsoft.BioEnrollment|Microsoft.CredDialogHost|Microsoft.ECApp|Microsoft.LockApp|Microsoft.UI.Xaml.CBS|Microsoft.Win32WebViewHost|Microsoft.Windows.Apprep.ChxApp|Microsoft.Windows.CallingShellApp|Microsoft.Windows.CapturePicker|Microsoft.Windows.CloudExperienceHost|Microsoft.Windows.ContentDeliveryManager|Microsoft.Windows.FileExplorer|Microsoft.Windows.NarratorQuickStart|Microsoft.Windows.OOBENetworkCaptivePortal|Microsoft.Windows.OOBENetworkConnectionFlow|Microsoft.Windows.ParentalControls|Microsoft.Windows.PeopleExperienceHost|Microsoft.Windows.PinningConfirmationDialog|Microsoft.Windows.Search|Microsoft.Windows.ShellExperienceHost|Microsoft.Windows.XGpuEjectDialog|MicrosoftWindows.UndockedDevKit|NcsiUwpApp|windows.immersivecontrolpanel|Windows.PrintDialog|Microsoft.NET.Native|Microsoft.UI.Xaml|Microsoft.VCLibs|Microsoft.Windows.StartMenuExperienceHost|Microsoft.WebMediaExtensions|Microsoft.WebpImageExtension|Microsoft.WindowsCalculator|Microsoft.DesktopAppInstaller|Microsoft.WindowsTerminal|Microsoft.HEIFImageExtension|Microsoft.Windows.Photos|Microsoft.WindowsStore|Microsoft.ScreenSketch|Microsoft.WindowsCamera|Microsoft.Winget.Source'
+[regex]$WhitelistedApps ='Microsoft.VP9VideoExtensions|Microsoft.NET.Native|Microsoft.HEVCVideoExtension|Microsoft.MicrosoftStickyNotes|Microsoft.Paint|Microsoft.RawImageExtension|Microsoft.WindowsNotepad|Microsoft.WindowsSoundRecorder|Microsoft.LanguageExperiencePackro-RO|Microsoft.AAD.BrokerPlugin|Microsoft.AccountsControl|Microsoft.AsyncTextService|Microsoft.BioEnrollment|Microsoft.CredDialogHost|Microsoft.ECApp|Microsoft.LockApp|Microsoft.UI.Xaml.CBS|Microsoft.Win32WebViewHost|Microsoft.Windows.Apprep.ChxApp|Microsoft.Windows.CallingShellApp|Microsoft.Windows.CapturePicker|Microsoft.Windows.CloudExperienceHost|Microsoft.Windows.ContentDeliveryManager|Microsoft.Windows.FileExplorer|Microsoft.Windows.NarratorQuickStart|Microsoft.Windows.OOBENetworkCaptivePortal|Microsoft.Windows.OOBENetworkConnectionFlow|Microsoft.Windows.ParentalControls|Microsoft.Windows.PeopleExperienceHost|Microsoft.Windows.PinningConfirmationDialog|Microsoft.Windows.Search|Microsoft.Windows.ShellExperienceHost|Microsoft.Windows.XGpuEjectDialog|MicrosoftWindows.UndockedDevKit|NcsiUwpApp|windows.immersivecontrolpanel|Windows.PrintDialog|Microsoft.UI.Xaml|Microsoft.VCLibs|Microsoft.Windows.StartMenuExperienceHost|Microsoft.WebMediaExtensions|Microsoft.WebpImageExtension|Microsoft.WindowsCalculator|Microsoft.DesktopAppInstaller|Microsoft.WindowsTerminal|Microsoft.HEIFImageExtension|Microsoft.Windows.Photos|Microsoft.WindowsStore|Microsoft.ScreenSketch|Microsoft.WindowsCamera|Microsoft.Winget.Source'
 Get-AppxPackage -AllUsers | Where-Object {$_.Name -Match $WhitelistedApps} | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"} -ErrorAction Continue
 Get-AppxPackage -AllUsers | Where-Object {$_.Name -NotMatch $WhitelistedApps} | Remove-AppxPackage -ErrorAction Continue
 $AppxRemoval = Get-AppxProvisionedPackage -Online | Where-Object {$_.PackageName -NotMatch $WhitelistedApps} 
 ForEach ( $App in $AppxRemoval) {
 Remove-AppxProvisionedPackage -Online -PackageName $App.PackageName 
 Get-AppxPackage | Where-Object {$_.Name -NotMatch $WhitelistedApps} | Remove-AppxPackage
+}
+
+Write-Output "Removing WindowsUserExperience - ClientCbs - Windows Backup App"
+$remove_appx = @("Client.CBS"); $provisioned = get-appxprovisionedpackage -online; $appxpackage = get-appxpackage -allusers; $eol = @()
+$store = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore'
+$users = @('S-1-5-18'); if (test-path $store) {$users += $((dir $store -ea 0 |where {$_ -like '*S-1-5-21*'}).PSChildName)}
+foreach ($choice in $remove_appx) { if ('' -eq $choice.Trim()) {continue}
+foreach ($appx in $($provisioned |where {$_.PackageName -like "*$choice*"})) {
+$next = !1; foreach ($no in $skip) {if ($appx.PackageName -like "*$no*") {$next = !0}} ; if ($next) {continue}
+$PackageName = $appx.PackageName; $PackageFamilyName = ($appxpackage |where {$_.Name -eq $appx.DisplayName}).PackageFamilyName
+ni "$store\Deprovisioned\$PackageFamilyName" -force >''; $PackageFamilyName
+foreach ($sid in $users) {ni "$store\EndOfLife\$sid\$PackageName" -force >''} ; $eol += $PackageName
+dism /online /set-nonremovableapppolicy /packagefamily:$PackageFamilyName /nonremovable:0 >''
+remove-appxprovisionedpackage -packagename $PackageName -online -allusers >''
+}
+foreach ($appx in $($appxpackage |where {$_.PackageFullName -like "*$choice*"})) {
+$next = !1; foreach ($no in $skip) {if ($appx.PackageFullName -like "*$no*") {$next = !0}} ; if ($next) {continue}
+$PackageFullName = $appx.PackageFullName;
+ni "$store\Deprovisioned\$appx.PackageFamilyName" -force >''; $PackageFullName
+foreach ($sid in $users) {ni "$store\EndOfLife\$sid\$PackageFullName" -force >''} ; $eol += $PackageFullName
+dism /online /set-nonremovableapppolicy /packagefamily:$PackageFamilyName /nonremovable:0 >''
+remove-appxpackage -package $PackageFullName -allusers >''
+}
 }
 
 # To restore all Apps use: Get-AppxPackage -AllUsers| Foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"}
@@ -89,7 +112,7 @@ $START_MENU_LAYOUT = @"
           <start:DesktopApplicationTile Size="2x2" Column="2" Row="0" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\LibreOfficeCalcPortable.lnk" />
           <start:DesktopApplicationTile Size="2x2" Column="2" Row="2" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\FirefoxPortable.lnk" />
           <start:DesktopApplicationTile Size="2x2" Column="2" Row="4" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\VLCPortable.lnk" />
-          <start:DesktopApplicationTile Size="2x2" Column="2" Row="6" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\rustdesk-1.1.9.lnk" />
+          <start:DesktopApplicationTile Size="2x2" Column="2" Row="6" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\RustDesk.lnk" />
           <start:DesktopApplicationTile Size="2x2" Column="4" Row="0" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\LibreOfficeImpressPortable.lnk" />
           <start:DesktopApplicationTile Size="2x2" Column="4" Row="2" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\GoogleChromePortable.lnk" />
           <start:DesktopApplicationTile Size="2x2" Column="4" Row="4" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\TelegramDesktopPortable.lnk" />
@@ -142,7 +165,7 @@ foreach ($regAlias in $regAliases){
 Stop-Process -name explorer
 
 # Uncomment the next line to make clean start menu default for all new users
-Import-StartLayout -LayoutPath $layoutFile -MountPath $env:SystemDrive\
+#Import-StartLayout -LayoutPath $layoutFile -MountPath $env:SystemDrive\
 
 Remove-Item $layoutFile
 
