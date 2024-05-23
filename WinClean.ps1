@@ -52,6 +52,7 @@ Get-AppxPackage | Where-Object {$_.Name -NotMatch $WhitelistedApps} | Remove-App
 }
 
 Write-Output "Removing WindowsUserExperience - ClientCbs - Windows Backup App"
+# https://forums.mydigitallife.net/threads/3-ways-to-remove-windows-backup-app.88156/
 $remove_appx = @("Client.CBS"); $provisioned = get-appxprovisionedpackage -online; $appxpackage = get-appxpackage -allusers; $eol = @()
 $store = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore'
 $users = @('S-1-5-18'); if (test-path $store) {$users += $((dir $store -ea 0 |where {$_ -like '*S-1-5-21*'}).PSChildName)}
