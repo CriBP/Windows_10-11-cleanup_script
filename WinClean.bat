@@ -1,8 +1,11 @@
 msg "%username%" Please make sure you: `Read_First.txt
 Notepad "`Read_First.txt"
-
+systeminfo
 :: Rename C: Drive to Windows-OS
 label C: Windows-OS
+
+:: Set Time to UTC (Dual Boot) Essential for computers that are dual booting. Fixes the time sync with Linux Systems.
+reg add "HKLM\System\CurrentControlSet\Control\TimeZoneInformation" /f /v RealTimeIsUniversal /t REG_DWORD /d 1
 
 :: Rename computer: wmic computersystem where caption='current_pc_name' rename new_pc_name
 :: Rename a remote computer on the same network: wmic /node:"Remote-Computer-Name" /user:Admin /password:Remote-Computer-password computersystem call rename "Remote-Computer-New-Name"
@@ -10,6 +13,54 @@ label C: Windows-OS
 rem wmic computersystem rename Work-PC
 :: Add comments with :: or REM at beginning, if they are not in the beginning of line, then add & character: your commands here & :: comment
 
+:: Disable Hyper-V:
+:: bcdedit /set hypervisorlaunchtype off
+:: DISM /Online /Disable-Feature:Microsoft-Hyper-V
+
+:: Microsoft Edge uninstall
+powershell.exe -ExecutionPolicy Bypass -File ./Edge-uninstall.ps1
+
+:: Microsoft OneDrive uninstall
+powershell.exe -ExecutionPolicy Bypass -File ./OneDrive-uninstall.ps1
+set x86="%SYSTEMROOT%\System32\OneDriveSetup.exe"
+set x64="%SYSTEMROOT%\SysWOW64\OneDriveSetup.exe"
+:: Closing OneDrive process.
+taskkill /f /im OneDrive.exe
+ping 127.0.0.1 -n 5
+if exist %x64% (
+%x64% /uninstall
+) else (
+%x86% /uninstall
+)
+ping 127.0.0.1 -n 5
+%SystemRoot%\System32\OneDriveSetup.exe /uninstall
+%SystemRoot%\SysWOW64\OneDriveSetup.exe /uninstall
+:: Removing OneDrive leftovers.
+rd "%USERPROFILE%\OneDrive" /Q /S
+rd "C:\OneDriveTemp" /Q /S
+rd "%LOCALAPPDATA%\Microsoft\OneDrive" /Q /S
+rd "%PROGRAMDATA%\Microsoft OneDrive" /Q /S
+:: Removing OneDrive from the Explorer Side Panel.
+reg delete "HKCR\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f
+reg delete "HKCR\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f
+del /Q /F "%localappdata%\Microsoft\OneDrive\OneDriveStandaloneUpdater.exe"
+del /Q /F "%UserProfile%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\OneDrive.lnk"
+
+:: Prefer IPv4 over IPv6: To set the IPv4 preference can have latency and security benefits on private networks where IPv6 is not configured.
+reg add "HKLM\System\CurrentControlSet\Services\Tcpip6\Parameters" /f /v DisabledComponents /t REG_DWORD /d 255
+
+:: Disable Wifi-Sense: Wifi Sense is a spying service that phones home all nearby scanned wifi networks and your current geo location.
+reg add "HKLM\Software\Microsoft\PolicyManager\default\WiFi\AllowWiFiHotSpotReporting" /f /v "Value" /t REG_DWORD /d 0
+reg add "HKLM\Software\Microsoft\PolicyManager\default\WiFi\AllowAutoConnectToWiFiSenseHotspots" /f /v "Value" /t REG_DWORD /d 0
+
+:: Enable End Task With Right Click - Enables option to end task when right clicking a program in the taskbar
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings" /f /v TaskbarEndTask /t REG_DWORD /d 1
+
+:: Remove Home and Gallery from explorer
+reg delete "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}" /f
+reg delete "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{f874310e-b6b7-47dc-bc84-b9e6b38f5903}" /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "LaunchTo" /t REG_DWORD /d "1"
+	  
 :: Turn Off System Protection for All Drives
 :: Created by: Shawn Brink; Created on: December 27, 2021; Tutorial: https://www.elevenforum.com/t/turn-on-or-off-system-protection-for-drives-in-windows-11.3598/
 reg delete "HKLM\Software\Microsoft\Windows NT\CurrentVersion\SPP\Clients" /f /v "{09F7EDC5-294E-4180-AF6A-FB0E6A0E9513}"
@@ -25,6 +76,9 @@ wmic /Namespace:\\root\default Path SystemRestore Call Disable "F:\" & :: F-driv
 
 :: Disable Hybernation
 powercfg -h off
+powercfg.exe /hibernate off
+reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Power" /f /v HibernateEnabled /t REG_DWORD /d 0
+reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings" /f /v ShowHibernateOption /t REG_DWORD /d 0
 
 :: Decrypt Bitlocker (useless resource hog abused by Microsoft, unless sensitive data has to be protected)
 manage-bde -status
@@ -34,10 +88,10 @@ manage-bde -off E:
 manage-bde -off F:
 
 :: Disable Copilot
+reg add "HKLM\Software\Policies\Microsoft\Windows\WindowsCopilot" /f /v TurnOffWindowsCopilot /t REG_DWORD /d 1
 reg add "HKCU\Software\Policies\Microsoft\Windows\WindowsCopilot" /f /v TurnOffWindowsCopilot /t REG_DWORD /d 1
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v ShowCopilotButton /t REG_DWORD /d 0
 reg add "HKCU\Software\Policies\Microsoft\Edge" /f /v HubsSidebarEnabled" /t REG_DWORD /d 0
-reg add "HKLM\Software\Policies\Microsoft\Windows\WindowsCopilot" /f /v TurnOffWindowsCopilot /t REG_DWORD /d 1
 
 :: Disable Ads in Windows 11 - Source https://www.elevenforum.com/t/disable-ads-in-windows-11.8004/
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v ShowSyncProviderNotifications /t REG_DWORD /d 0
@@ -98,9 +152,10 @@ reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Holographic" /f /v "Firs
 dism /Online /Get-Capabilities
 :: "Remove Windows Media Player:"
 dism /Online /Remove-Capability /CapabilityName:Media.WindowsMediaPlayer~~~~0.0.12.0
-:: "Remove Windows WallPapers extended:"
+:: "Remove Feature: Extended Inbox Theme Content:"
+dism /Online /Remove-Capability /CapabilityName:Microsoft.Wallpapers.Extended~~~~
 dism /Online /Remove-Capability /CapabilityName:Microsoft.Wallpapers.Extended~~~~0.0.1.0
-:: "Remove Quick Assist:"
+:: "Remove Feature: Microsoft Quick Assist:"
 dism /Online /Remove-Capability /CapabilityName:App.Support.QuickAssist~~~~0.0.1.0
 :: "Remove Hello Face:"
 dism /Online /Remove-Capability /CapabilityName:Hello.Face.18967~~~~0.0.1.0
@@ -108,15 +163,25 @@ dism /Online /Remove-Capability /CapabilityName:Hello.Face.Migration.18967~~~~0.
 dism /Online /Remove-Capability /CapabilityName:Hello.Face.20134~~~~0.0.1.0
 :: "Remove Math Recognizer:"
 dism /Online /Remove-Capability /CapabilityName:MathRecognizer~~~~0.0.1.0
-:: "Remove Onesync:"
+:: "Remove Onesync Feature: Exchange ActiveSync and Internet Mail Sync Engine:"
 dism /Online /Remove-Capability /CapabilityName:OneCoreUAP.OneSync~~~~0.0.1.0
 :: Turn off Steps Recorder - Source https://admx.help/?Category=Windows_10_2016&Policy=Microsoft.Policies.ApplicationCompatibility::AppCompatTurnOffUserActionRecord
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppCompat" /f /v "DisableUAR" /t REG_DWORD /d "1"
 dism /Online /Remove-Capability /CapabilityName:App.StepsRecorder~~~~0.0.1.0
-:: Add Windows Fax and Scan
+:: Remove Feature: Windows Feature Experience Pack
+dism /Online /Remove-Capability /CapabilityName:Windows.Client.ShellComponents~~~~0.0.1.0
+:: "Remove Internet Printing:"
+:: "Remove Work Folders:"
+:: "Remove Contact Support:"
+:: "Remove Language Speech:"
+
+:: Add Optional Features
+:: Add Feature: Print Fax Scan
 dism /Online /Add-Capability /CapabilityName:Print.Fax.Scan~~~~0.0.1.0
-:: Add Connect a wireless display to your Windows PC
-dism /Online /Add-Capability /CapabilityName:App.WirelessDisplay.Connect~~~~0.0.1.0
+:: Add Feature: WMIC. A Windows Management Instrumentation (WMI) command-line utility.
+dism /Online /Add-Capability /CapabilityName:WMIC~~~~
+:: Add  .NET Framework
+dism /Online /Add-Capability /CapabilityName:NetFX3~~~~
 
 :: Enable High Performance Power Scheme
 powercfg /l
@@ -151,26 +216,24 @@ reg add "HKCU\Software\Microsoft\Windows\DWM" /f /v "ColorPrevalence" /t REG_DWO
 reg add "HKCU\Software\Microsoft\Windows\DWM" /f /v "EnableAeroPeek" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\DWM" /f /v "EnableWindowColorization" /t REG_DWORD /d 1
 
-:: Temporary stop Windows Defender since it will block removal of Microsoft Telemetry, and Activity Reporting:
-powershell -inputformat none -outputformat none -NonInteractive -Command -ExecutionPolicy Bypass Set-MpPreference -DisableRealtimeMonitoring 1
-powershell -inputformat none -outputformat none -NonInteractive -Command -ExecutionPolicy Bypass Set-MpPreference -DisableRealtimeMonitoring $true
-powershell -inputformat none -outputformat none -NonInteractive -Command "Add-MpPreference -ExclusionPath '%UserProfile%\Downloads\WinClean\'"
-powershell -inputformat none -outputformat none -NonInteractive -Command "Add-MpPreference -ExclusionPath 'D:\Microsoft\Downloads\WinClean\'"
-powershell -inputformat none -outputformat none -NonInteractive -Command "Add-MpPreference -ExclusionPath '%SystemRoot%\System32\drivers\etc\hosts'"
-reg add "HKLM\Software\Policies\Microsoft\Windows Defender\Real-Time Protection" /f /v "DisableRealtimeMonitoring" /t REG_DWORD /d 1
-
 :: Quiet down Windows Security stopping unnecessary notifications
 reg add "HKCU\Software\Microsoft\Windows Defender Security Center\Account protection" /f /v "DisableNotifications" /t REG_DWORD /d "1"
 reg add "HKCU\Software\Microsoft\Windows Defender Security Center\Account protection" /f /v "DisableWindowsHelloNotifications" /t REG_DWORD /d "1"
 reg add "HKCU\Software\Microsoft\Windows Defender Security Center\Account protection" /f /v "DisableDynamiclockNotifications" /t REG_DWORD /d "1"
 
 :: Disable Collect Activity History: Created by: Shawn Brink on: December 14th 2017; Tutorial: https://www.tenforums.com/tutorials/100341-enable-disable-collect-activity-history-windows-10-a.html
+reg add "HKLM\Software\Policies\Microsoft\Windows\System" /f /v "EnableActivityFeed" /t REG_DWORD /d 0
 reg add "HKLM\Software\Policies\Microsoft\Windows\System" /f /v "PublishUserActivities" /t REG_DWORD /d 0
 reg add "HKLM\Software\Policies\Microsoft\Windows\System" /f /v "UploadUserActivities" /t REG_DWORD /d 0
 reg add "HKLM\Software\WOW6432Node\Policies\Microsoft\Windows\System" /f /v "PublishUserActivities" /t REG_DWORD /d 0
 reg add "HKLM\Software\WOW6432Node\Policies\Microsoft\Windows\System" /f /v "UploadUserActivities" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Privacy" /f /v "TailoredExperiencesWithDiagnosticDataEnabled" /t REG_DWORD /d 0
 reg add "HKCU\Software\Policies\Microsoft\Windows\CloudContent" /f /v "DisableTailoredExperiencesWithDiagnosticData" /t REG_DWORD /d 1
+
+:: Add Windows Defender ExclusionPath to enable host protection:
+powershell -inputformat none -outputformat none -NonInteractive -Command "Add-MpPreference -ExclusionPath '%UserProfile%\Downloads\WinClean\'"
+powershell -inputformat none -outputformat none -NonInteractive -Command "Add-MpPreference -ExclusionPath 'D:\Microsoft\Downloads\WinClean\'"
+powershell -inputformat none -outputformat none -NonInteractive -Command "Add-MpPreference -ExclusionPath '%SystemRoot%\System32\drivers\etc\hosts'"
 
 :: Transfer Hosts File:
 copy /D /V /Y hosts %SystemRoot%\System32\drivers\etc\hosts
@@ -211,7 +274,11 @@ reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\email" /f /v "Value" /t REG_SZ /d Deny
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\gazeInput" /f /v "Value" /t REG_SZ /d Deny
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\humanInterfaceDevice" /f /v "Value" /t REG_SZ /d Deny
+:: Disable Location Tracking
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" /f /v "Value" /t REG_SZ /d Deny
+reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Sensor\Overrides\{BFA794E4-F964-4FDB-90F6-51056BFE4B44}" /f /v "SensorPermissionState" /t REG_DWORD /d 0
+reg add "HKLM\System\CurrentControlSet\Services\lfsvc\Service\Configuration" /f /v "Status" /t REG_DWORD /d 0
+reg add "HKLM\System\Maps" /f /v "AutoUpdateEnabled" /t REG_DWORD /d 0
 ::  Do not allow apps to access microphone
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone" /f /v "Value" /t REG_SZ /d Allow
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\musicLibrary" /f /v "Value" /t REG_SZ /d Deny
@@ -320,31 +387,6 @@ reg add "HKCU\Software\Microsoft\InputPersonalization" /f /v "RestrictImplicitTe
 reg add "HKCU\Software\Microsoft\InputPersonalization" /f /v "RestrictImplicitInkCollection" /t REG_DWORD /d 1
 reg add "HKCU\Software\Microsoft\InputPersonalization\TrainedDataStore" /f /v "HarvestContacts" /t REG_DWORD /d 0
 
-:: Uninstall OneDrive
-set x86="%SYSTEMROOT%\System32\OneDriveSetup.exe"
-set x64="%SYSTEMROOT%\SysWOW64\OneDriveSetup.exe"
-:: Closing OneDrive process.
-taskkill /f /im OneDrive.exe
-ping 127.0.0.1 -n 5
-if exist %x64% (
-%x64% /uninstall
-) else (
-%x86% /uninstall
-)
-ping 127.0.0.1 -n 5
-%SystemRoot%\System32\OneDriveSetup.exe /uninstall
-%SystemRoot%\SysWOW64\OneDriveSetup.exe /uninstall
-:: Removing OneDrive leftovers.
-rd "%USERPROFILE%\OneDrive" /Q /S
-rd "C:\OneDriveTemp" /Q /S
-rd "%LOCALAPPDATA%\Microsoft\OneDrive" /Q /S
-rd "%PROGRAMDATA%\Microsoft OneDrive" /Q /S
-:: Removing OneDrive from the Explorer Side Panel.
-reg delete "HKCR\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f
-reg delete "HKCR\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f
-del /Q /F "%localappdata%\Microsoft\OneDrive\OneDriveStandaloneUpdater.exe"
-del /Q /F "%UserProfile%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\OneDrive.lnk"
-
 :: Disable Windows Search Box... and web search in the search box Created by: Shawn Brink on: May 4th 2019 Tutorial: https://www.tenforums.com/tutorials/2854-hide-show-search-box-search-icon-taskbar-windows-10-a.html
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /f /v "BingSearchEnabled" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /f /v "WebControlStatus" /t REG_DWORD /d 0
@@ -358,15 +400,15 @@ reg add "HKLM\Software\Policies\Microsoft\Windows\Explorer" /f /v "DisableSearch
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\system" /f /v LocalAccountTokenFilterPolicy /t REG_DWORD /d 1
 
 :: Remove the Limit local account use of blank passwords to console logon only...
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /f /v "LimitBlankPasswordUse" /t REG_DWORD /d 0
+reg add "HKLM\System\CurrentControlSet\Control\Lsa" /f /v "LimitBlankPasswordUse" /t REG_DWORD /d 0
 
 :: Enable Local Security Authority Protection...
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /f /v RunAsPPL /t REG_DWORD /d 1
+reg add "HKLM\System\CurrentControlSet\Control\Lsa" /f /v RunAsPPL /t REG_DWORD /d 1
 
 :: Disable Windows Feedback...
 reg add "HKCU\Software\Microsoft\Siuf\Rules" /f /v "NumberOfSIUFInPeriod" /t REG_DWORD /d 0
 reg delete "HKCU\Software\Microsoft\Siuf\Rules" /f /v "PeriodInNanoSeconds"
-reg add "HKLM\SYSTEM\ControlSet001\Control\WMI\AutoLogger\AutoLogger-Diagtrack-Listener" /f /v "Start" /t REG_DWORD /d 0
+reg add "HKLM\System\ControlSet001\Control\WMI\AutoLogger\AutoLogger-Diagtrack-Listener" /f /v "Start" /t REG_DWORD /d 0
 echo "" > C:\ProgramData\Microsoft\Diagnosis\ETLLogs\AutoLogger\AutoLogger-Diagtrack-Listener.etl
 echo y|cacls  C:\ProgramData\Microsoft\Diagnosis\ETLLogs\AutoLogger\AutoLogger-Diagtrack-Listener.etl  /d SYSTEM
 rem reg add "HKLM\Software\Policies\Microsoft\MicrosoftEdge\PhishingFilter" /f /v "EnabledV9" /t REG_DWORD /d 0
@@ -375,7 +417,7 @@ rem reg add "HKLM\Software\Policies\Microsoft\Windows\System" /f /v "EnableSmart
 
 :: Disabling Cortana...
 reg add "HKLM\Software\Policies\Microsoft\Windows\Windows Search" /f /v "AllowCortana" /t REG_DWORD /d 0
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules"  /v "{2765E0F4-2918-4A46-B9C9-43CDD8FCBA2B}" /t REG_SZ /d  "BlockCortana|Action=Block|Active=TRUE|Dir=Out|App=C:\windows\systemapps\microsoft.windows.cortana_cw5n1h2txyewy\searchui.exe|Name=Search  and Cortana  application|AppPkgId=S-1-15-2-1861897761-1695161497-2927542615-642690995-327840285-2659745135-2630312742|" /f
+reg add "HKLM\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules"  /v "{2765E0F4-2918-4A46-B9C9-43CDD8FCBA2B}" /t REG_SZ /d  "BlockCortana|Action=Block|Active=TRUE|Dir=Out|App=C:\windows\systemapps\microsoft.windows.cortana_cw5n1h2txyewy\searchui.exe|Name=Search  and Cortana  application|AppPkgId=S-1-15-2-1861897761-1695161497-2927542615-642690995-327840285-2659745135-2630312742|" /f
 
 :: Turn off Windows Error reporting...
 reg add "HKLM\Software\Policies\Microsoft\Windows\Windows Error Reporting" /f /v "Disabled" /t REG_DWORD /d 1
@@ -406,8 +448,29 @@ reg add "HKLM\Software\Policies\Microsoft\WindowsInkWorkspace" /f /v "AllowSugge
 :: Disabling live tiles...
 reg add "HKCU\Software\Policies\Microsoft\Windows\CurrentVersion\PushNotifications" /f /v "NoTileApplicationNotification" /t REG_DWORD /d 1
 
-:: Stop auto-installation of Microsoft Edge using Registry 
+:: Debloat Microsoft Edge using Registry - Disables various telemetry options, popups, and other annoyances in Edge.
 reg add "HKLM\Software\Microsoft\EdgeUpdate" /f /v "DoNotUpdateToEdgeWithChromium" /t REG_DWORD /d 1
+reg add "HKLM\Software\Policies\Microsoft\EdgeUpdate" /f /v "CreateDesktopShortcutDefault" /t REG_DWORD /d 0
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "EdgeEnhanceImagesEnabled" /t REG_DWORD /d 0
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "PersonalizationReportingEnabled" /t REG_DWORD /d 0
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "ShowRecommendationsEnabled" /t REG_DWORD /d 0
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "HideFirstRunExperience" /t REG_DWORD /d 1
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "UserFeedbackAllowed" /t REG_DWORD /d 0
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "ConfigureDoNotTrack" /t REG_DWORD /d 1
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "AlternateErrorPagesEnabled" /t REG_DWORD /d 0
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "EdgeCollectionsEnabled" /t REG_DWORD /d 0
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "EdgeFollowEnabled" /t REG_DWORD /d 0
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "EdgeShoppingAssistantEnabled" /t REG_DWORD /d 0
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "MicrosoftEdgeInsiderPromotionEnabled" /t REG_DWORD /d 0
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "PersonalizationReportingEnabled" /t REG_DWORD /d 0
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "ShowMicrosoftRewards" /t REG_DWORD /d 0
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "WebWidgetAllowed" /t REG_DWORD /d 0
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "DiagnosticData" /t REG_DWORD /d 0
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "EdgeAssetDeliveryServiceEnabled" /t REG_DWORD /d 0
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "EdgeCollectionsEnabled" /t REG_DWORD /d 0
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "CryptoWalletEnabled" /t REG_DWORD /d 0
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "ConfigureDoNotTrack" /t REG_DWORD /d 1
+reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "WalletDonationEnabled" /t REG_DWORD /d 0
 
 :: settings » privacy » general » speech, inking, typing
 reg add "HKCU\Software\Microsoft\Personalization\Settings" /f /v "AcceptedPrivacyPolicy" /t REG_DWORD /d 0
@@ -450,6 +513,9 @@ reg add "HKCU\Software\Microsoft\GameBar" /f /v "AllowAutoGameMode" /t REG_DWORD
 reg add "HKCU\Software\Microsoft\GameBar" /f /v "AutoGameModeEnabled" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\GameDVR" /f /v "AppCaptureEnabled" /t REG_DWORD /d 0
 reg add "HKCU\System\GameConfigStore" /f /v "GameDVR_Enabled" /t REG_DWORD /d 0
+reg add "HKCU\System\GameConfigStore" /f /v "GameDVR_EFSEFeatureFlags" /t REG_DWORD /d 0
+reg add "HKCU\System\GameConfigStore" /f /v "GameDVR_HonorUserFSEBehaviorMode" /t REG_DWORD /d 1
+reg add "HKCU\System\GameConfigStore" /f /v "GameDVR_FSEBehavior" /t REG_DWORD /d 2
 reg add "HKLM\Software\Policies\Microsoft\Windows\GameDVR" /f /v "AllowGameDVR" /t REG_DWORD /d 0
 
 :: Turn off Cloud Content Search for Microsoft Account: Created by: Shawn Brink on: September 18, 2022; Tutorial: https://www.elevenforum.com/t/enable-or-disable-cloud-content-search-in-windows-11.5378/
@@ -576,7 +642,7 @@ reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v
 start explorer.exe
 
 :: Disable Remote Assistance: Created by: Shawn Brink on: August 27th 2018:: Tutorial: https://www.tenforums.com/tutorials/116749-enable-disable-remote-assistance-connections-windows.html
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Remote Assistance" /f /v fAllowToGetHelp /t REG_DWORD /d 0
+reg add "HKLM\System\CurrentControlSet\Control\Remote Assistance" /f /v fAllowToGetHelp /t REG_DWORD /d 0
 netsh advfirewall firewall set rule group="Remote Assistance" new enable=no
 
 :: Change to Small memory dump: Memory dump file options for Windows: https://support.microsoft.com/en-us/topic/b863c80e-fb51-7bd5-c9b0-6116c3ca920f
@@ -716,7 +782,7 @@ sc stop XboxNetApiSvc
 sc delete XboxNetApiSvc
 sc stop XboxGipSvc
 sc delete XboxGipSvc
-reg delete "HKLM\SYSTEM\CurrentControlSet\Services\xbgm" /f
+reg delete "HKLM\System\CurrentControlSet\Services\xbgm" /f
 schtasks /Change /TN "Microsoft\XblGameSave\XblGameSaveTask" /disable
 schtasks /Change /TN "Microsoft\XblGameSave\XblGameSaveTaskLogon" /disable
 
@@ -742,6 +808,8 @@ schtasks /Change /TN "\Microsoft\Windows\Application Experience\PcaPatchDbTask" 
 schtasks /Change /TN "\Microsoft\Windows\Application Experience\ProgramDataUpdater" /disable
 :: StartupAppTask - Scans startup entries and raises notification to the user if there are too many startup entries.
 schtasks /Change /TN "\Microsoft\Windows\Application Experience\StartupAppTask" /disable
+:: MareBackup - Gathers Win32 application data for App Backup scenario
+schtasks /Change /TN "\Microsoft\Windows\Application Experience\MareBackup" /disable
 :: Cleans up each package's unused temporary files.
 rem schtasks /Change /TN "\Microsoft\Windows\ApplicationData\CleanupTemporaryState" /disable
 :: Performs maintenance for the Data Sharing Service.
@@ -818,7 +886,6 @@ schtasks /Change /TN "\Microsoft\Windows\Workplace Join\Recovery-Check" /disable
 schtasks /Change /TN "\Microsoft\Windows\User Profile Service\HiveUploadTask" /disable
 
 
-
 :: Removing Telemetry and other unnecessary services:
 :: Connected User Experience and Telemetry component, also known as the Universal Telemetry Client (UTC)...
 sc stop DiagTrack
@@ -832,20 +899,20 @@ sc delete WerSvc
 :: Synchronize mail, contacts, calendar and various other user data...
 sc stop OneSyncSvc
 :: Preventing Windows from re-enabling Telemetry services...
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\DiagTrack" /f /v "Start" /t REG_DWORD /d 4
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\DiagTrack" /f /v "Type" /t REG_DWORD /d 10
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\DiagTrack" /f /v "ServiceSidType" /t REG_DWORD /d 1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\DiagTrack" /f /v "ServiceDllUnloadOnStop" /t REG_DWORD /d 1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\dmwappushservice" /f /v "DelayedAutoStart" /t REG_DWORD /d 0
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\dmwappushservice" /f /v "Start" /t REG_DWORD /d 4
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\dmwappushservice" /f /v "Type" /t REG_DWORD /d 20
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\dmwappushservice" /f /v "ServiceSidType" /t REG_DWORD /d 1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\dmwappushservice\Parameters" /f /v "ServiceDllUnloadOnStop" /t REG_DWORD /d 1
+reg add "HKLM\System\CurrentControlSet\Services\DiagTrack" /f /v "Start" /t REG_DWORD /d 4
+reg add "HKLM\System\CurrentControlSet\Services\DiagTrack" /f /v "Type" /t REG_DWORD /d 10
+reg add "HKLM\System\CurrentControlSet\Services\DiagTrack" /f /v "ServiceSidType" /t REG_DWORD /d 1
+reg add "HKLM\System\CurrentControlSet\Services\DiagTrack" /f /v "ServiceDllUnloadOnStop" /t REG_DWORD /d 1
+reg add "HKLM\System\CurrentControlSet\Services\dmwappushservice" /f /v "DelayedAutoStart" /t REG_DWORD /d 0
+reg add "HKLM\System\CurrentControlSet\Services\dmwappushservice" /f /v "Start" /t REG_DWORD /d 4
+reg add "HKLM\System\CurrentControlSet\Services\dmwappushservice" /f /v "Type" /t REG_DWORD /d 20
+reg add "HKLM\System\CurrentControlSet\Services\dmwappushservice" /f /v "ServiceSidType" /t REG_DWORD /d 1
+reg add "HKLM\System\CurrentControlSet\Services\dmwappushservice\Parameters" /f /v "ServiceDllUnloadOnStop" /t REG_DWORD /d 1
 
 :: System TuneUp
 :: Optimize prefetch parameters to improve Windows boot-up speed
-reg add "HKLM\SYSTEM\ControlSet001\Control\Session Manager\Memory Management\PrefetchParameters" /f /v "EnablePrefetcher" /t REG_DWORD /d 2
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /f /v "EnablePrefetcher" /t REG_DWORD /d 2
+reg add "HKLM\System\ControlSet001\Control\Session Manager\Memory Management\PrefetchParameters" /f /v "EnablePrefetcher" /t REG_DWORD /d 2
+reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /f /v "EnablePrefetcher" /t REG_DWORD /d 2
 :: Reduce Application idlesness at closing to improve shutdown process
 reg delete "HKCU\Control Panel\Desktop" /f /v "LowLevelHooksTimeout"
 reg delete "HKCU\Control Panel\Desktop" /f /v "WaitToKillServiceTimeout"
@@ -859,11 +926,11 @@ reg add "HKCU\Control Panel\Desktop" /f /v "WaitToKillAppTimeout" /t REG_SZ /d "
 reg add "HKLM\Software\Microsoft\Dfrg\BootOptimizeFunction" /f /v "Enable" /t REG_SZ /d "y"
 :: System Stability
 :: Disable automatical reboot when system encounters blue screen
-reg add "HKLM\SYSTEM\ControlSet001\Control\CrashControl" /f /v "AutoReboot" /t REG_DWORD /d 0
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\CrashControl" /f /v "AutoReboot" /t REG_DWORD /d 0
+reg add "HKLM\System\ControlSet001\Control\CrashControl" /f /v "AutoReboot" /t REG_DWORD /d 0
+reg add "HKLM\System\CurrentControlSet\Control\CrashControl" /f /v "AutoReboot" /t REG_DWORD /d 0
 :: Disable registry modification from a remote computer
-reg add "HKLM\SYSTEM\ControlSet001\Control\SecurePipeServers\winreg" /f /v "remoteregaccess" /t REG_DWORD /d 1
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\SecurePipeServers\winreg" /f /v "remoteregaccess" /t REG_DWORD /d 1
+reg add "HKLM\System\ControlSet001\Control\SecurePipeServers\winreg" /f /v "remoteregaccess" /t REG_DWORD /d 1
+reg add "HKLM\System\CurrentControlSet\Control\SecurePipeServers\winreg" /f /v "remoteregaccess" /t REG_DWORD /d 1
 :: Set Windows Explorer components to run in separate processes avoiding system conflicts
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer" /f /v "DesktopProcess" /t REG_DWORD /d 1
 :: Close frozen processes to avoid system crashes
@@ -890,11 +957,11 @@ reg add "HKCU\Control Panel\Desktop" /f /v "ForegroundLockTimeout" /t REG_DWORD 
 :: Boost the display speed of Aero Peek.
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "DesktopLivePreviewHoverTime" /t REG_DWORD /d 0
 :: Disable memory pagination and reduce disk 1/0 to improve application performance. {Option may be ignored if physical memory is <1 GB)
-reg add "HKLM\SYSTEM\ControlSet001\Control\Session Manager\Memory Management" /f /v "DisablePagingExecutive" /t REG_DWORD /d 1
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /f /v "DisablePagingExecutive" /t REG_DWORD /d 1
+reg add "HKLM\System\ControlSet001\Control\Session Manager\Memory Management" /f /v "DisablePagingExecutive" /t REG_DWORD /d 1
+reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management" /f /v "DisablePagingExecutive" /t REG_DWORD /d 1
 :: Optimize processor performance for execution of applications, games, etc. {Ignore if server}
-reg add "HKLM\SYSTEM\ControlSet001\Control\PriorityControl" /f /v "Win32PrioritySeparation" /t REG_DWORD /d "38"
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /f /v "Win32PrioritySeparation" /t REG_DWORD /d "38"
+reg add "HKLM\System\ControlSet001\Control\PriorityControl" /f /v "Win32PrioritySeparation" /t REG_DWORD /d "38"
+reg add "HKLM\System\CurrentControlSet\Control\PriorityControl" /f /v "Win32PrioritySeparation" /t REG_DWORD /d "38"
 :: Close animation effect when maximizing or minimizing a window to speed up the window response.
 reg add "HKCU\Control Panel\Desktop\WindowMetrics" /f /v "MinAnimate" /t REG_SZ /d "0"
 :: Optimize disk I/O while CPU is idle (HDD only)
@@ -902,18 +969,18 @@ reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\OptimalLayout" /f /v "En
 :: Disable the "Autoplay" feature on drives to avoid virus infection/propagation.
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "NoDriveTypeAutoRun" /t REG_DWORD /d "221"
 :: Optimize disk 1/0 subsystem to improve system performance.
-reg add "HKLM\SYSTEM\ControlSet001\Control\Session Manager" /f /v "AutoChkTimeout" /t REG_DWORD /d 5
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager" /f /v "AutoChkTimeout" /t REG_DWORD /d 5
+reg add "HKLM\System\ControlSet001\Control\Session Manager" /f /v "AutoChkTimeout" /t REG_DWORD /d 5
+reg add "HKLM\System\CurrentControlSet\Control\Session Manager" /f /v "AutoChkTimeout" /t REG_DWORD /d 5
 :: Optimize the file system to improve system performance.
-reg delete "HKLM\SYSTEM\ControlSet001\Control\FileSystem" /f /v "NtfsDisableLastAccessUpdate"
-reg delete "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /f /v "NtfsDisableLastAccessUpdate"
-reg add "HKLM\SYSTEM\ControlSet001\Control\FileSystem" /f /v "NtfsDisableLastAccessUpdate" /t REG_DWORD /d 2147483649
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /f /v "NtfsDisableLastAccessUpdate" /t REG_DWORD /d 2147483649
+reg delete "HKLM\System\ControlSet001\Control\FileSystem" /f /v "NtfsDisableLastAccessUpdate"
+reg delete "HKLM\System\CurrentControlSet\Control\FileSystem" /f /v "NtfsDisableLastAccessUpdate"
+reg add "HKLM\System\ControlSet001\Control\FileSystem" /f /v "NtfsDisableLastAccessUpdate" /t REG_DWORD /d 2147483649
+reg add "HKLM\System\CurrentControlSet\Control\FileSystem" /f /v "NtfsDisableLastAccessUpdate" /t REG_DWORD /d 2147483649
 :: Optimize front end components (dialog box, menus, etc.) appearance to improve system performance.
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "TaskbarAnimations" /t REG_DWORD /d 0
 :: Optimize memory default settings to improve system performance.
-reg add "HKLM\SYSTEM\ControlSet001\Control\Session Manager\Memory Management" /f /v "IoPageLockLimit" /t REG_DWORD /d "134217728"
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /f /v "IoPageLockLimit" /t REG_DWORD /d "134217728"
+reg add "HKLM\System\ControlSet001\Control\Session Manager\Memory Management" /f /v "IoPageLockLimit" /t REG_DWORD /d "134217728"
+reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management" /f /v "IoPageLockLimit" /t REG_DWORD /d "134217728"
 :: Disable the debugger to speed up error processing.
 reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\AeDebug" /f /v "Auto" /t REG_SZ /d 0
 :: Disable screen error reporting to improve system performance.
@@ -923,76 +990,70 @@ reg add "HKLM\Software\Microsoft\PCHealth\ErrorReporting" /f /v "DoReport" /t RE
 :: Optimize LAN connection.
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "nonetcrawling" /t REG_DWORD /d 1
 :: Optimize DNS and DNS parsing speed.
-reg add "HKLM\SYSTEM\ControlSet001\Services\Dnscache\Parameters" /f /v "maxnegativecachettl" /t REG_DWORD /d 0
-reg add "HKLM\SYSTEM\ControlSet001\Services\Dnscache\Parameters" /f /v "maxcachettl" /t REG_DWORD /d "10800"
-reg add "HKLM\SYSTEM\ControlSet001\Services\Dnscache\Parameters" /f /v "maxcacheentryttllimit" /t REG_DWORD /d "10800"
-reg add "HKLM\SYSTEM\ControlSet001\Services\Dnscache\Parameters" /f /v "netfailurecachetime" /t REG_DWORD /d "0"
-reg add "HKLM\SYSTEM\ControlSet001\Services\Dnscache\Parameters" /f /v "negativesoacachetime" /t REG_DWORD /d "0"
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /f /v "maxnegativecachettl" /t REG_DWORD /d 0
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /f /v "maxcachettl" /t REG_DWORD /d "10800"
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /f /v "maxcacheentryttllimit" /t REG_DWORD /d "10800"
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /f /v "netfailurecachetime" /t REG_DWORD /d "0"
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /f /v "negativesoacachetime" /t REG_DWORD /d "0"
+reg add "HKLM\System\ControlSet001\Services\Dnscache\Parameters" /f /v "maxnegativecachettl" /t REG_DWORD /d 0
+reg add "HKLM\System\ControlSet001\Services\Dnscache\Parameters" /f /v "maxcachettl" /t REG_DWORD /d "10800"
+reg add "HKLM\System\ControlSet001\Services\Dnscache\Parameters" /f /v "maxcacheentryttllimit" /t REG_DWORD /d "10800"
+reg add "HKLM\System\ControlSet001\Services\Dnscache\Parameters" /f /v "netfailurecachetime" /t REG_DWORD /d "0"
+reg add "HKLM\System\ControlSet001\Services\Dnscache\Parameters" /f /v "negativesoacachetime" /t REG_DWORD /d "0"
+reg add "HKLM\System\CurrentControlSet\Services\Dnscache\Parameters" /f /v "maxnegativecachettl" /t REG_DWORD /d 0
+reg add "HKLM\System\CurrentControlSet\Services\Dnscache\Parameters" /f /v "maxcachettl" /t REG_DWORD /d "10800"
+reg add "HKLM\System\CurrentControlSet\Services\Dnscache\Parameters" /f /v "maxcacheentryttllimit" /t REG_DWORD /d "10800"
+reg add "HKLM\System\CurrentControlSet\Services\Dnscache\Parameters" /f /v "netfailurecachetime" /t REG_DWORD /d "0"
+reg add "HKLM\System\CurrentControlSet\Services\Dnscache\Parameters" /f /v "negativesoacachetime" /t REG_DWORD /d "0"
 :: Optimize Ethernet card performance.
-reg add "HKLM\SYSTEM\ControlSet001\Services\Tcpip\Parameters" /f /v "MaxConnectionsPerServer" /t REG_DWORD /d 0
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /f /v "MaxConnectionsPerServer" /t REG_DWORD /d 0
+reg add "HKLM\System\ControlSet001\Services\Tcpip\Parameters" /f /v "MaxConnectionsPerServer" /t REG_DWORD /d 0
+reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /f /v "MaxConnectionsPerServer" /t REG_DWORD /d 0
 :: Optimize network forward ability to improve network performance.
-reg add "HKLM\SYSTEM\ControlSet001\Control\Nsi\{eb004a03-9b1a-11d4-9123-0050047759bc}\0" /f /v "0200" /t REG_BINARY /d "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff"
-reg add "HKLM\SYSTEM\ControlSet001\Services\Tcpip\Parameters" /f /v "Tcp1323Opts" /t REG_DWORD /d "1"
-reg add "HKLM\SYSTEM\ControlSet001\Services\Tcpip\Parameters" /f /v "SackOpts" /t REG_DWORD /d "1"
-reg add "HKLM\SYSTEM\ControlSet001\Services\Tcpip\Parameters" /f /v "TcpMaxDupAcks" /t REG_DWORD /d "2"
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Nsi\{eb004a03-9b1a-11d4-9123-0050047759bc}\0" /f /v "0200" /t REG_BINARY /d "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff"
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /f /v "Tcp1323Opts" /t REG_DWORD /d "1"
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /f /v "SackOpts" /t REG_DWORD /d "1"
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /f /v "TcpMaxDupAcks" /t REG_DWORD /d "2"
+reg add "HKLM\System\ControlSet001\Control\Nsi\{eb004a03-9b1a-11d4-9123-0050047759bc}\0" /f /v "0200" /t REG_BINARY /d "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff"
+reg add "HKLM\System\ControlSet001\Services\Tcpip\Parameters" /f /v "Tcp1323Opts" /t REG_DWORD /d "1"
+reg add "HKLM\System\ControlSet001\Services\Tcpip\Parameters" /f /v "SackOpts" /t REG_DWORD /d "1"
+reg add "HKLM\System\ControlSet001\Services\Tcpip\Parameters" /f /v "TcpMaxDupAcks" /t REG_DWORD /d "2"
+reg add "HKLM\System\CurrentControlSet\Control\Nsi\{eb004a03-9b1a-11d4-9123-0050047759bc}\0" /f /v "0200" /t REG_BINARY /d "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff"
+reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /f /v "Tcp1323Opts" /t REG_DWORD /d "1"
+reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /f /v "SackOpts" /t REG_DWORD /d "1"
+reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /f /v "TcpMaxDupAcks" /t REG_DWORD /d "2"
 :: Optimize network settings to improve communication performance.
-reg add "HKLM\SYSTEM\ControlSet001\Services\LanmanWorkstation\Parameters" /f /v "MaxCollectionCount" /t REG_DWORD /d "32"
-reg add "HKLM\SYSTEM\ControlSet001\Services\LanmanWorkstation\Parameters" /f /v "MaxThreads" /t REG_DWORD /d "30"
-reg add "HKLM\SYSTEM\ControlSet001\Services\LanmanWorkstation\Parameters" /f /v "MaxCmds" /t REG_DWORD /d "30"
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" /f /v "MaxCollectionCount" /t REG_DWORD /d "32"
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" /f /v "MaxThreads" /t REG_DWORD /d "30"
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" /f /v "MaxCmds" /t REG_DWORD /d "30"
+reg add "HKLM\System\ControlSet001\Services\LanmanWorkstation\Parameters" /f /v "MaxCollectionCount" /t REG_DWORD /d "32"
+reg add "HKLM\System\ControlSet001\Services\LanmanWorkstation\Parameters" /f /v "MaxThreads" /t REG_DWORD /d "30"
+reg add "HKLM\System\ControlSet001\Services\LanmanWorkstation\Parameters" /f /v "MaxCmds" /t REG_DWORD /d "30"
+reg add "HKLM\System\CurrentControlSet\Services\LanmanWorkstation\Parameters" /f /v "MaxCollectionCount" /t REG_DWORD /d "32"
+reg add "HKLM\System\CurrentControlSet\Services\LanmanWorkstation\Parameters" /f /v "MaxThreads" /t REG_DWORD /d "30"
+reg add "HKLM\System\CurrentControlSet\Services\LanmanWorkstation\Parameters" /f /v "MaxCmds" /t REG_DWORD /d "30"
 :: Optimize WINS name query time to improve data transfer speed.
-reg add "HKLM\SYSTEM\ControlSet001\Services\Tcpip\Parameters" /v "NameSrvQueryTimeout" /f /t REG_DWORD /d "3000"
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "NameSrvQueryTimeout" /f /t REG_DWORD /d "3000"
+reg add "HKLM\System\ControlSet001\Services\Tcpip\Parameters" /v "NameSrvQueryTimeout" /f /t REG_DWORD /d "3000"
+reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /v "NameSrvQueryTimeout" /f /t REG_DWORD /d "3000"
 :: Improve TCP/IP performance through automatic detection of "black holes" in routing at Path MTU Discovery technique.
-reg add "HKLM\SYSTEM\ControlSet001\Services\Tcpip\Parameters" /v "EnablePMTUDiscovery" /f /t REG_DWORD /d "1"
-reg add "HKLM\SYSTEM\ControlSet001\Services\Tcpip\Parameters" /v "EnablePMTUBHDetect" /f /t REG_DWORD /d "1"
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "EnablePMTUDiscovery" /f /t REG_DWORD /d "1"
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "EnablePMTUBHDetect" /f /t REG_DWORD /d "1"
-reg add "HKLM\SYSTEM\ControlSet001\Control\Nsi\{eb004a03-9b1a-11d4-9123-0050047759bc}\0" /f /v "0200" /t REG_BINARY /d "010000010000000000000000000000000000000000000000000000000000ff0000ff00000000000000000000000000000000000000000000000000ff"
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Nsi\{eb004a03-9b1a-11d4-9123-0050047759bc}\0" /f /v "0200" /t REG_BINARY /d "010000010000000000000000000000000000000000000000000000000000ff0000ff00000000000000000000000000000000000000000000000000ff"
+reg add "HKLM\System\ControlSet001\Services\Tcpip\Parameters" /v "EnablePMTUDiscovery" /f /t REG_DWORD /d "1"
+reg add "HKLM\System\ControlSet001\Services\Tcpip\Parameters" /v "EnablePMTUBHDetect" /f /t REG_DWORD /d "1"
+reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /v "EnablePMTUDiscovery" /f /t REG_DWORD /d "1"
+reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /v "EnablePMTUBHDetect" /f /t REG_DWORD /d "1"
+reg add "HKLM\System\ControlSet001\Control\Nsi\{eb004a03-9b1a-11d4-9123-0050047759bc}\0" /f /v "0200" /t REG_BINARY /d "010000010000000000000000000000000000000000000000000000000000ff0000ff00000000000000000000000000000000000000000000000000ff"
+reg add "HKLM\System\CurrentControlSet\Control\Nsi\{eb004a03-9b1a-11d4-9123-0050047759bc}\0" /f /v "0200" /t REG_BINARY /d "010000010000000000000000000000000000000000000000000000000000ff0000ff00000000000000000000000000000000000000000000000000ff"
 :: Optimize TTL {Time To Live) settings to improve network performance.
-reg add "HKLM\SYSTEM\ControlSet001\Services\Tcpip\Parameters" /f /v "DefaultTTL" /t REG_DWORD /d "64"
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /f /v "DefaultTTL" /t REG_DWORD /d "64"
-reg add "HKLM\SYSTEM\ControlSet001\Control\Nsi\{eb004a00-9b1a-11d4-9123-0050047759bc}\6" /f /ve /t REG_BINARY /d "000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffffffff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff"
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Nsi\{eb004a00-9b1a-11d4-9123-0050047759bc}\6" /f /ve /t REG_BINARY /d "000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffffffff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff"
+reg add "HKLM\System\ControlSet001\Services\Tcpip\Parameters" /f /v "DefaultTTL" /t REG_DWORD /d "64"
+reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /f /v "DefaultTTL" /t REG_DWORD /d "64"
+reg add "HKLM\System\ControlSet001\Control\Nsi\{eb004a00-9b1a-11d4-9123-0050047759bc}\6" /f /ve /t REG_BINARY /d "000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffffffff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff"
+reg add "HKLM\System\CurrentControlSet\Control\Nsi\{eb004a00-9b1a-11d4-9123-0050047759bc}\6" /f /ve /t REG_BINARY /d "000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffffffff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff"
 :: SSD optimize
 :: Disable drive defrag system on boot to extend lifespan of SSD.
 reg add "HKLM\Software\Microsoft\Dfrg\BootOptimizeFunction" /f /v "Enable" /t REG_SZ /d "n"
 :: Disable auto defrag when idle to extend lifespan of SSD.
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\OptimalLayout" /f /v "EnableAutoLayout" /t REG_DWORD /d "0"
 :: Disable prefetch parameters to extend lifespan of SSD.
-reg add "HKLM\SYSTEM\ControlSet001\Control\Session Manager\Memory Management\PrefetchParameters" /f /v "EnablePrefetcher" /t REG_DWORD /d "0"
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /f /v "EnablePrefetcher" /t REG_DWORD /d "0"
+reg add "HKLM\System\ControlSet001\Control\Session Manager\Memory Management\PrefetchParameters" /f /v "EnablePrefetcher" /t REG_DWORD /d "0"
+reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /f /v "EnablePrefetcher" /t REG_DWORD /d "0"
 :: Enable TRIM function to improve working performance of SSD.
-
 
 taskkill /f /im explorer.exe
 
 powershell.exe -ExecutionPolicy Bypass -File WinClean.ps1
 
-:: Enable Windows Defender Realtime Monitoring:
-powershell -inputformat none -outputformat none -NonInteractive -Command -ExecutionPolicy Bypass Set-MpPreference -DisableRealtimeMonitoring 0
-powershell -inputformat none -outputformat none -NonInteractive -Command -ExecutionPolicy Bypass Set-MpPreference -DisableRealtimeMonitoring $false
-reg delete "HKLM\Software\Policies\Microsoft\Windows Defender\Real-Time Protection" /f /v "DisableRealtimeMonitoring"
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" /f /v "Enabled" /t REG_DWORD /d 0
+:: Update all installed programs
+winget upgrade --all --silent --force
 
-:: Uninstall Microsoft Edge
-del /Q /F "%UserProfile%\Desktop\Microsoft Edge.lnk"
-cd %ProgramFiles(x86)%\Microsoft\Edge\Application\
-:: Please change Directory to the "installation number"\installer and run setup.exe --uninstall --system-level --verbose-logging --force-uninstall
-
+:: Run Disk Cleanup - Runs Disk Cleanup on Drive C: and removes old Windows Updates.
+cleanmgr.exe /d C: /VERYLOWDISK
+Dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase
 
 :: Verify System Files
 sfc /scannow
