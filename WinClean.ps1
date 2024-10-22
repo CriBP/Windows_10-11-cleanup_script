@@ -51,37 +51,9 @@ Remove-AppxProvisionedPackage -Online -PackageName $App.PackageName
 Get-AppxPackage | Where-Object {$_.Name -NotMatch $WhitelistedApps} | Remove-AppxPackage
 }
 
-Write-Output "Removing WindowsUserExperience - ClientCbs - Windows Backup App"
-# https://forums.mydigitallife.net/threads/3-ways-to-remove-windows-backup-app.88156/
-$remove_appx = @("Client.CBS"); $provisioned = get-appxprovisionedpackage -online; $appxpackage = get-appxpackage -allusers; $eol = @()
-$store = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore'
-$users = @('S-1-5-18'); if (test-path $store) {$users += $((dir $store -ea 0 |where {$_ -like '*S-1-5-21*'}).PSChildName)}
-foreach ($choice in $remove_appx) { if ('' -eq $choice.Trim()) {continue}
-foreach ($appx in $($provisioned |where {$_.PackageName -like "*$choice*"})) {
-$next = !1; foreach ($no in $skip) {if ($appx.PackageName -like "*$no*") {$next = !0}} ; if ($next) {continue}
-$PackageName = $appx.PackageName; $PackageFamilyName = ($appxpackage |where {$_.Name -eq $appx.DisplayName}).PackageFamilyName
-ni "$store\Deprovisioned\$PackageFamilyName" -force >''; $PackageFamilyName
-foreach ($sid in $users) {ni "$store\EndOfLife\$sid\$PackageName" -force >''} ; $eol += $PackageName
-dism /online /set-nonremovableapppolicy /packagefamily:$PackageFamilyName /nonremovable:0 >''
-remove-appxprovisionedpackage -packagename $PackageName -online -allusers >''
-}
-foreach ($appx in $($appxpackage |where {$_.PackageFullName -like "*$choice*"})) {
-$next = !1; foreach ($no in $skip) {if ($appx.PackageFullName -like "*$no*") {$next = !0}} ; if ($next) {continue}
-$PackageFullName = $appx.PackageFullName;
-ni "$store\Deprovisioned\$appx.PackageFamilyName" -force >''; $PackageFullName
-foreach ($sid in $users) {ni "$store\EndOfLife\$sid\$PackageFullName" -force >''} ; $eol += $PackageFullName
-dism /online /set-nonremovableapppolicy /packagefamily:$PackageFamilyName /nonremovable:0 >''
-remove-appxpackage -package $PackageFullName -allusers >''
-}
-}
-
 # To restore all Apps use: Get-AppxPackage -AllUsers| Foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"}
 Write-Output "All Apps remaining:..."
 Get-AppxPackage -AllUsers | Select Name, PackageFullName
-# Update all Apps
-Add-AppxPackage -RegisterByFamilyName -MainPackage Microsoft.DesktopAppInstaller_8wekyb3d8bbwe
-winget upgrade
-winget upgrade --accept-source-agreements --all --include-unknown
 
 #Cleanup Start Menu
 Write-Output "Cleaning up the Start Menu Apps"
@@ -113,7 +85,7 @@ $START_MENU_LAYOUT = @"
           <start:DesktopApplicationTile Size="2x2" Column="2" Row="0" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\LibreOfficeCalcPortable.lnk" />
           <start:DesktopApplicationTile Size="2x2" Column="2" Row="2" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\FirefoxPortable.lnk" />
           <start:DesktopApplicationTile Size="2x2" Column="2" Row="4" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\VLCPortable.lnk" />
-          <start:DesktopApplicationTile Size="2x2" Column="2" Row="6" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\RustDesk.lnk" />
+          <start:DesktopApplicationTile Size="2x2" Column="2" Row="6" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\rustdesk-1.1.9.lnk" />
           <start:DesktopApplicationTile Size="2x2" Column="4" Row="0" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\LibreOfficeImpressPortable.lnk" />
           <start:DesktopApplicationTile Size="2x2" Column="4" Row="2" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\GoogleChromePortable.lnk" />
           <start:DesktopApplicationTile Size="2x2" Column="4" Row="4" DesktopApplicationLinkPath="%APPDATA%\Microsoft\Windows\Start Menu\Programs\TelegramDesktopPortable.lnk" />
@@ -170,15 +142,13 @@ Stop-Process -name explorer
 
 Remove-Item $layoutFile
 
-#Remove Optional Features
-Write-Host "Remove Internet Printing:"
-Get-WindowsCapability -online | ? {$_.Name -like '*InternetPrinting*'} | Remove-WindowsCapability -online
-Write-Host "Remove Work Folders:"
-Get-WindowsCapability -online | ? {$_.Name -like '*WorkFolders*'} | Remove-WindowsCapability -online
-Write-Host "Remove Contact Support:"
-Get-WindowsCapability -online | ? {$_.Name -like '*ContactSupport*'} | Remove-WindowsCapability -online
-Write-Host "Remove Language Speech:"
-Get-WindowsCapability -online | ? {$_.Name -like '*Language.Speech*'} | Remove-WindowsCapability -online
+#Disable Memory Compression
+Get-MMAgent
+Disable-MMAgent -alp
+Disable-MMAgent -apl
+Disable-MMAgent -mc
+Disable-MMAgent -oapi
+Disable-MMAgent -pc
 
 Write-Host "Restore InstallService"
 If (Get-Service -Name InstallService | Where-Object {$_.Status -eq "Stopped"}) {  
@@ -195,6 +165,14 @@ reg unload HKU\Default_User
 
 Write-Host "Unloading the HKCR drive..."
 Remove-PSDrive HKCR 
+
+#Erases TEMP Folders: "https://christitustech.github.io/winutil/dev/tweaks/Essential-Tweaks/DeleteTempFiles"
+Get-ChildItem -Path "C:\Windows\Temp" *.* -Recurse | Remove-Item -Force -Recurse
+Get-ChildItem -Path $env:TEMP *.* -Recurse | Remove-Item -Force -Recurse
+
+# Run Chris Titus Cleanup Scripts
+irm "https://christitus.com/win" | iex
+
 Start-Sleep 1
 Write-Output "Finished all tasks"
 Stop-Transcript
