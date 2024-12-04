@@ -1,30 +1,67 @@
+@echo off
+:: Add comments with :: or REM at beginning, if they are not in the beginning of line, then add & character: your commands here & :: comment
+:: Change window size
+rem MODE 120,80
+echo Sets the default console foreground and background colours. %ESC%[36m https://ss64.com/nt/color.html
+Color 07
+::Generate ANSI ESC char for color codes
+for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set ESC=%%b
+echo %ESC%[1m- Commands sintax and utils @ %ESC%[36m https://ss64.com %ESC%[0m
+
+echo -%ESC%[32m Save user information to Documents\PC-info %ESC%[0m -%ESC%[36m https://www.tenforums.com/tutorials/3443-view-user-account-details-windows-10-a.html %ESC%[0m
+md %UserProfile%\Documents\PC-info
+wmic useraccount list full >"%UserProfile%\Documents\PC-info\UserAccountDetails.txt"
+echo -%ESC%[32m Export WiFi passwords -%ESC%[36m https://www.elevenforum.com/t/backup-and-restore-wi-fi-network-profiles-in-windows-11.4472/ %ESC%[0m
+netsh wlan show profiles
+netsh wlan export profile key=clear folder=%UserProfile%\Documents\PC-info
+echo -%ESC%[32m Check if Users are a Microsoft account or Local account -%ESC%[36m https://www.tenforums.com/tutorials/5387-how-tell-if-local-account-microsoft-account-windows-10-a.html %ESC%[0m
+powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "Get-LocalUser | Select-Object Name,PrincipalSource | Out-File -filepath "$Env:userprofile\Documents\PC-info\All_Accounts.txt""
+echo -%ESC%[32m Saving PC information to -%ESC%[36m %UserProfile%\Documents\PC-info %ESC%[0m
+systeminfo > %UserProfile%\Documents\PC-info\SystemInfo.txt
+systeminfo /FO CSV > %UserProfile%\Documents\PC-info\SystemInfo.csv
+
 msg "%username%" Please make sure you: `Read_First.txt
 Notepad "`Read_First.txt"
-systeminfo
-:: Rename C: Drive to Windows-OS
+:Menu
+powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "Get-LocalUser | Select-Object Name,PrincipalSource"
+echo 	%ESC%[101;93m WARNING !!! %ESC%[0m
+echo %ESC%[33m -------------------------------- %ESC%[0m
+echo %ESC%[31m If you see a%ESC%[0m %ESC%[41mMicrosoftAccount%ESC%[0m %ESC%[31min the above list, please stop and switch to%ESC%[0m %ESC%[32mLocal Account%ESC%[0m
+echo   %ESC%[1m(%ESC%[0m%ESC%[31mU%ESC%[0m%ESC%[1m)%ESC%[0m Open User Accounts
+echo   %ESC%[1m(%ESC%[0m%ESC%[31mC%ESC%[0m%ESC%[1m)%ESC%[0m Continue
+echo   %ESC%[1m(%ESC%[0m%ESC%[31mX%ESC%[0m%ESC%[1m)%ESC%[0m STOP
+echo/ & CHOICE /C UCX /N /M "Enter Selection:"
+IF %errorlevel%==1 START "" Rundll32.exe shell32.dll,Control_RunDLL nusrmgr.cpl
+IF %errorlevel%==2 START "" exit /b & goto Continue
+IF %errorlevel%==3 START "" exit /b & exit /b
+goto Menu
+:Continue
+echo -%ESC%[32m Rename C: Drive to Windows-OS %ESC%[0m
 label C: Windows-OS
 
-:: Set Time to UTC (Dual Boot) Essential for computers that are dual booting. Fixes the time sync with Linux Systems.
+echo -%ESC%[32m Set Time to UTC (Dual Boot) Essential for computers that are dual booting. Fixes the time sync with Linux Systems. %ESC%[0m
 reg add "HKLM\System\CurrentControlSet\Control\TimeZoneInformation" /f /v RealTimeIsUniversal /t REG_DWORD /d 1
 
 :: Rename computer: wmic computersystem where caption='current_pc_name' rename new_pc_name
 :: Rename a remote computer on the same network: wmic /node:"Remote-Computer-Name" /user:Admin /password:Remote-Computer-password computersystem call rename "Remote-Computer-New-Name"
 :: Rename computer to Work-PC
 rem wmic computersystem rename Work-PC
-:: Add comments with :: or REM at beginning, if they are not in the beginning of line, then add & character: your commands here & :: comment
-
 :: Disable Hyper-V:
-:: bcdedit /set hypervisorlaunchtype off
-:: DISM /Online /Disable-Feature:Microsoft-Hyper-V
+rem bcdedit /set hypervisorlaunchtype off
+rem dism /Online /NoRestart /Disable-Feature:Microsoft-Hyper-V /NoRestart
 
-:: Microsoft Edge uninstall
+echo -%ESC%[32m To prevent a specific update from installing Download the "Show or hide updates" troubleshooter package from the Microsoft website: %ESC%[36m https://download.microsoft.com/download/f/2/2/f22d5fdb-59cd-4275-8c95-1be17bf70b21/wushowhide.diagcab %ESC%[0m
+powershell -c "Invoke-WebRequest -Uri 'https://download.microsoft.com/download/f/2/2/f22d5fdb-59cd-4275-8c95-1be17bf70b21/wushowhide.diagcab' -OutFile '%UserProfile%\Documents\PC-info\wushowhide.diagcab'"
+
+echo -%ESC%[32m Microsoft Edge uninstall %ESC%[0m
 powershell.exe -ExecutionPolicy Bypass -File ./Edge-uninstall.ps1
 
-:: Microsoft OneDrive uninstall
+echo -%ESC%[32m Microsoft OneDrive uninstall %ESC%[0m
 powershell.exe -ExecutionPolicy Bypass -File ./OneDrive-uninstall.ps1
+echo -%ESC%[32m Removing OneDrive leftovers. %ESC%[0m
 set x86="%SYSTEMROOT%\System32\OneDriveSetup.exe"
 set x64="%SYSTEMROOT%\SysWOW64\OneDriveSetup.exe"
-:: Closing OneDrive process.
+echo -%ESC%[32m Closing OneDrive process. %ESC%[0m
 taskkill /f /im OneDrive.exe
 ping 127.0.0.1 -n 5
 if exist %x64% (
@@ -35,34 +72,34 @@ if exist %x64% (
 ping 127.0.0.1 -n 5
 %SystemRoot%\System32\OneDriveSetup.exe /uninstall
 %SystemRoot%\SysWOW64\OneDriveSetup.exe /uninstall
-:: Removing OneDrive leftovers.
 rd "%USERPROFILE%\OneDrive" /Q /S
 rd "C:\OneDriveTemp" /Q /S
 rd "%LOCALAPPDATA%\Microsoft\OneDrive" /Q /S
 rd "%PROGRAMDATA%\Microsoft OneDrive" /Q /S
-:: Removing OneDrive from the Explorer Side Panel.
+
+echo -%ESC%[32m Removing OneDrive from the Explorer Side Panel. %ESC%[0m
 reg delete "HKCR\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f
 reg delete "HKCR\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f
 del /Q /F "%localappdata%\Microsoft\OneDrive\OneDriveStandaloneUpdater.exe"
 del /Q /F "%UserProfile%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\OneDrive.lnk"
 
-:: Prefer IPv4 over IPv6: To set the IPv4 preference can have latency and security benefits on private networks where IPv6 is not configured.
+echo -%ESC%[32m Prefer IPv4 over IPv6: To set the IPv4 preference can have latency and security benefits on private networks where IPv6 is not configured. %ESC%[0m
 reg add "HKLM\System\CurrentControlSet\Services\Tcpip6\Parameters" /f /v DisabledComponents /t REG_DWORD /d 255
 
-:: Disable Wifi-Sense: Wifi Sense is a spying service that phones home all nearby scanned wifi networks and your current geo location.
+echo -%ESC%[32m Disable Wifi-Sense: Wifi Sense is a spying service that phones home all nearby scanned wifi networks and your current geo location. %ESC%[0m
 reg add "HKLM\Software\Microsoft\PolicyManager\default\WiFi\AllowWiFiHotSpotReporting" /f /v "Value" /t REG_DWORD /d 0
 reg add "HKLM\Software\Microsoft\PolicyManager\default\WiFi\AllowAutoConnectToWiFiSenseHotspots" /f /v "Value" /t REG_DWORD /d 0
 
-:: Enable End Task With Right Click - Enables option to end task when right clicking a program in the taskbar
+echo -%ESC%[32m Enable End Task With Right Click - Enables option to end task when right clicking a program in the taskbar %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings" /f /v TaskbarEndTask /t REG_DWORD /d 1
 
-:: Remove Home and Gallery from explorer
+echo -%ESC%[32m Remove Home and Gallery from explorer %ESC%[0m
 reg delete "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}" /f
 reg delete "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{f874310e-b6b7-47dc-bc84-b9e6b38f5903}" /f
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "LaunchTo" /t REG_DWORD /d "1"
-	  
-:: Turn Off System Protection for All Drives
-:: Created by: Shawn Brink; Created on: December 27, 2021; Tutorial: https://www.elevenforum.com/t/turn-on-or-off-system-protection-for-drives-in-windows-11.3598/
+	 
+echo %ESC%[35m Turn Off System Protection for All Drives %ESC%[0m
+echo -%ESC%[32m Created by: Shawn Brink; Created on: December 27, 2021; Tutorial: %ESC%[36m https://www.elevenforum.com/t/turn-on-or-off-system-protection-for-drives-in-windows-11.3598/ %ESC%[0m
 reg delete "HKLM\Software\Microsoft\Windows NT\CurrentVersion\SPP\Clients" /f /v "{09F7EDC5-294E-4180-AF6A-FB0E6A0E9513}"
 reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\SPP\Clients" /f
 reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\SystemRestore" /f /v "RPSessionInterval" /t REG_DWORD /d "0"
@@ -74,116 +111,141 @@ wmic /Namespace:\\root\default Path SystemRestore Call Disable "E:\" & :: E-driv
 
 wmic /Namespace:\\root\default Path SystemRestore Call Disable "F:\" & :: F-drive
 
-:: Disable Hybernation
+echo -%ESC%[32m Disable Hybernation %ESC%[0m
 powercfg -h off
 powercfg.exe /hibernate off
 reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Power" /f /v HibernateEnabled /t REG_DWORD /d 0
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings" /f /v ShowHibernateOption /t REG_DWORD /d 0
 
-:: Decrypt Bitlocker (useless resource hog abused by Microsoft, unless sensitive data has to be protected)
+echo -%ESC%[32m Decrypt Bitlocker (useless resource hog abused by Microsoft, unless sensitive data has to be protected) %ESC%[0m
 manage-bde -status
 manage-bde -off C:
 manage-bde -off D:
 manage-bde -off E:
 manage-bde -off F:
 
-:: Disable Copilot
+echo -%ESC%[32m Disable Copilot %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\WindowsCopilot" /f /v TurnOffWindowsCopilot /t REG_DWORD /d 1
 reg add "HKCU\Software\Policies\Microsoft\Windows\WindowsCopilot" /f /v TurnOffWindowsCopilot /t REG_DWORD /d 1
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v ShowCopilotButton /t REG_DWORD /d 0
 reg add "HKCU\Software\Policies\Microsoft\Edge" /f /v HubsSidebarEnabled" /t REG_DWORD /d 0
 
-:: Disable Ads in Windows 11 - Source https://www.elevenforum.com/t/disable-ads-in-windows-11.8004/
+echo -%ESC%[32m Disable Ads in Windows 11 - Source %ESC%[36m https://www.elevenforum.com/t/disable-ads-in-windows-11.8004/ %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v ShowSyncProviderNotifications /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v RotatingLockScreenOverlayEnabled /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v Start_IrisRecommendations /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v Start_AccountNotifications /t REG_DWORD /d 0
 
-:: Remove Settings Home page in Windows 11; Created by: Shawn Brink; Created on: June 30, 2023; Tutorial: https://www.elevenforum.com/t/add-or-remove-settings-home-page-in-windows-11.16017/
+echo -%ESC%[32m Remove Settings Home page in Windows 11; Created by: Shawn Brink; Created on: June 30, 2023; Tutorial: %ESC%[36m https://www.elevenforum.com/t/add-or-remove-settings-home-page-in-windows-11.16017/ %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "SettingsPageVisibility" /t REG_SZ /d "hide:home"
 
-:: Turn Off Suggested Content in Settings: Created by: Shawn Brink; Created on: January 5, 2022; Tutorial: https://www.elevenforum.com/t/enable-or-disable-suggested-content-in-settings-in-windows-11.3791/
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-338387Enabled" /t REG_DWORD /d 0 :: Lock screen Spotlight - New backgrounds, tips, advertisements etc.
-:: To Turn Off App Suggestions in Start: source https://forums.mydigitallife.net/threads/windows-10-guide-for-remove-and-stop-apps-bundle-and-more-tweaks.76030/
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "OemPreInstalledAppsEnabled" /t REG_DWORD /d 0 :: OEM Preinstalled Apps
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "PreInstalledAppsEnabled" /t REG_DWORD /d 0 :: Preinstalled Apps in Windows 10
+echo -%ESC%[35m Turn Off Suggested Content in Settings: Created by: Shawn Brink; Created on: January 5, 2022; Tutorial: %ESC%[36m https://www.elevenforum.com/t/enable-or-disable-suggested-content-in-settings-in-windows-11.3791/ %ESC%[0m
+echo -%ESC%[32m Lock screen Spotlight - New backgrounds, tips, advertisements etc. %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-338387Enabled" /t REG_DWORD /d 0
+
+echo -%ESC%[35m To Turn Off App Suggestions in Start: source %ESC%[36m https://forums.mydigitallife.net/threads/windows-10-guide-for-remove-and-stop-apps-bundle-and-more-tweaks.76030/ %ESC%[0m
+echo -%ESC%[32m Disable from OEM Preinstalled Apps %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "OemPreInstalledAppsEnabled" /t REG_DWORD /d 0
+echo -%ESC%[32m Disable from Preinstalled Apps in Windows 10 %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "PreInstalledAppsEnabled" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "PreInstalledAppsEverEnabled" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SystemPaneSuggestionsEnabled " /t REG_DWORD /d 0
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "RotatingLockScreenEnabled" /t REG_DWORD /d 0 :: Windows Spotlight
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "RotatingLockScreenOverlayEnabled" /t REG_DWORD /d 0 :: Get fun facts, tips, tricks, and moe on your lock screen
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-280810Enabled" /t REG_DWORD /d 0 :: SyncProviders - OneDrive
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-280811Enabled" /t REG_DWORD /d 0 :: OneDrive
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-280813Enabled" /t REG_DWORD /d 0 :: Windows Ink - StokedOnIt
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-202914Enabled" /t REG_DWORD /d 0 :: Windows Spotlight
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-280815Enabled" /t REG_DWORD /d 0 :: Share - Facebook, Instagram and etc.
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-310091Enabled" /t REG_DWORD /d 0 :: 
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-310092Enabled" /t REG_DWORD /d 0 :: 
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-338380Enabled" /t REG_DWORD /d 0 :: 
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-314559Enabled" /t REG_DWORD /d 0 :: BingWeather, Candy Crush and etc.
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-338381Enabled" /t REG_DWORD /d 0 :: Windows Maps
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-314563Enabled" /t REG_DWORD /d 0 :: My People Suggested Apps
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-353698Enabled" /t REG_DWORD /d 0 :: Timeline Suggestions
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-338388Enabled" /t REG_DWORD /d 0 :: Occasionally show suggestions in Start
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-338389Enabled" /t REG_DWORD /d 0 :: Get tips, tricks and suggestion as you use Windows and Cortana
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-338393Enabled" /t REG_DWORD /d 0 :: Show me suggested content in the Settings app
+echo -%ESC%[32m Disable from Windows Spotlight %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "RotatingLockScreenEnabled" /t REG_DWORD /d 0
+echo -%ESC%[32m Disable from Get fun facts, tips, tricks, and moe on your lock screen %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "RotatingLockScreenOverlayEnabled" /t REG_DWORD /d 0
+echo -%ESC%[32m Disable from SyncProviders - OneDrive %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-280810Enabled" /t REG_DWORD /d 0
+echo -%ESC%[32m Disable from OneDrive %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-280811Enabled" /t REG_DWORD /d 0
+echo -%ESC%[32m Disable from Windows Ink - StokedOnIt %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-280813Enabled" /t REG_DWORD /d 0
+echo -%ESC%[32m Disable from Windows Spotlight %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-202914Enabled" /t REG_DWORD /d 0
+echo -%ESC%[32m Disable from Share - Facebook, Instagram and etc. %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-280815Enabled" /t REG_DWORD /d 0
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-310091Enabled" /t REG_DWORD /d 0
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-310092Enabled" /t REG_DWORD /d 0
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-338380Enabled" /t REG_DWORD /d 0
+echo -%ESC%[32m Disable from BingWeather, Candy Crush and etc. %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-314559Enabled" /t REG_DWORD /d 0
+echo -%ESC%[32m Disable from Windows Maps %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-338381Enabled" /t REG_DWORD /d 0
+echo -%ESC%[32m Disable from My People Suggested Apps %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-314563Enabled" /t REG_DWORD /d 0
+echo -%ESC%[32m Disable from Timeline Suggestions %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-353698Enabled" /t REG_DWORD /d 0
+echo -%ESC%[32m Disable from Occasionally show suggestions in Start %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-338388Enabled" /t REG_DWORD /d 0
+echo -%ESC%[32m Disable from Get tips, tricks and suggestion as you use Windows and Cortana %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-338389Enabled" /t REG_DWORD /d 0
+echo -%ESC%[32m Disable from Show me suggested content in the Settings app %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-338393Enabled" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-353694Enabled" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-353696Enabled" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-88000326Enabled" /t REG_DWORD /d 0
-:: Disable Start Menu Suggestions
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SystemPaneSuggestionsEnabled" /t REG_DWORD /d 0 :: Occassionally showing app suggestions in Start Menu
-:: To Disable Automatically Installing Suggested Apps
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SilentInstalledAppsEnabled" /t REG_DWORD /d 0 :: Automatically Installing Suggested Apps in Windows 10 Store Apps
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "FeatureManagementEnabled" /t REG_DWORD /d 0
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContentEnabled" /t REG_DWORD /d 0 :: Subsribed Content status Suggested Apps
-:: Disable Spotlight
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SlideshowEnabled" /t REG_DWORD /d 0
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SoftLandingEnabled" /t REG_DWORD /d 0 :: Tips, tricks and suggestions while using Windows
 
-:: Clear and Reset Quick Access Folders
+echo -%ESC%[35m Disable Start Menu Suggestions %ESC%[0m
+echo -%ESC%[32m Disable from Occassionally showing app suggestions in Start Menu %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SystemPaneSuggestionsEnabled" /t REG_DWORD /d 0
+echo -%ESC%[32m To Disable Automatically Installing Suggested Apps %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SilentInstalledAppsEnabled" /t REG_DWORD /d 0
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "FeatureManagementEnabled" /t REG_DWORD /d 0
+echo -%ESC%[32m Disable from Subsribed Content status Suggested Apps %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContentEnabled" /t REG_DWORD /d 0
+echo -%ESC%[32m Disable Spotlight %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SlideshowEnabled" /t REG_DWORD /d 0
+echo -%ESC%[32m Disable from Tips, tricks and suggestions while using Windows %ESC%[0m
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SoftLandingEnabled" /t REG_DWORD /d 0
+
+echo -%ESC%[32m Clear and Reset Quick Access Folders %ESC%[0m
 del /f /s /q /a "%AppData%\Microsoft\Windows\Recent\AutomaticDestinations\f01b4d95cf55d32a.automaticDestinations-ms"
 
-:: Increase the number of recent files displayed in the task bar
+echo -%ESC%[32m Increase the number of recent files displayed in the task bar %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "JumpListItems_Maximum " /t REG_DWORD /d 30
 
-:: Setting Mixed Reality Portal value to 0 so that you can uninstall it in Settings
+echo -%ESC%[32m Setting Mixed Reality Portal value to 0 so that you can uninstall it in Settings %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Holographic" /f /v "FirstRunSucceeded " /t REG_DWORD /d 0
 
-:: Remove Optional Features - List all Optional Features
-dism /Online /Get-Capabilities
-:: "Remove Windows Media Player:"
-dism /Online /Remove-Capability /CapabilityName:Media.WindowsMediaPlayer~~~~0.0.12.0
-:: "Remove Feature: Extended Inbox Theme Content:"
-dism /Online /Remove-Capability /CapabilityName:Microsoft.Wallpapers.Extended~~~~
-dism /Online /Remove-Capability /CapabilityName:Microsoft.Wallpapers.Extended~~~~0.0.1.0
-:: "Remove Feature: Microsoft Quick Assist:"
-dism /Online /Remove-Capability /CapabilityName:App.Support.QuickAssist~~~~0.0.1.0
-:: "Remove Hello Face:"
-dism /Online /Remove-Capability /CapabilityName:Hello.Face.18967~~~~0.0.1.0
-dism /Online /Remove-Capability /CapabilityName:Hello.Face.Migration.18967~~~~0.0.1.0
-dism /Online /Remove-Capability /CapabilityName:Hello.Face.20134~~~~0.0.1.0
-:: "Remove Math Recognizer:"
-dism /Online /Remove-Capability /CapabilityName:MathRecognizer~~~~0.0.1.0
-:: "Remove Onesync Feature: Exchange ActiveSync and Internet Mail Sync Engine:"
-dism /Online /Remove-Capability /CapabilityName:OneCoreUAP.OneSync~~~~0.0.1.0
-:: Turn off Steps Recorder - Source https://admx.help/?Category=Windows_10_2016&Policy=Microsoft.Policies.ApplicationCompatibility::AppCompatTurnOffUserActionRecord
+echo %ESC%[35m Remove Optional Features - List all Optional Features %ESC%[0m
+dism /Online /NoRestart /Get-Capabilities
+echo -%ESC%[32m "Remove Windows Media Player:" %ESC%[0m
+dism /Online /NoRestart /Remove-Capability /CapabilityName:Media.WindowsMediaPlayer~~~~0.0.12.0
+echo -%ESC%[32m "Remove Feature: Extended Inbox Theme Content:" %ESC%[0m
+dism /Online /NoRestart /Remove-Capability /CapabilityName:Microsoft.Wallpapers.Extended~~~~
+dism /Online /NoRestart /Remove-Capability /CapabilityName:Microsoft.Wallpapers.Extended~~~~0.0.1.0
+echo -%ESC%[32m "Remove Feature: Microsoft Quick Assist:" %ESC%[0m
+dism /Online /NoRestart /Remove-Capability /CapabilityName:App.Support.QuickAssist~~~~0.0.1.0
+echo -%ESC%[32m "Remove Hello Face:" %ESC%[0m
+dism /Online /NoRestart /Remove-Capability /CapabilityName:Hello.Face.18967~~~~0.0.1.0
+dism /Online /NoRestart /Remove-Capability /CapabilityName:Hello.Face.Migration.18967~~~~0.0.1.0
+dism /Online /NoRestart /Remove-Capability /CapabilityName:Hello.Face.20134~~~~0.0.1.0
+echo -%ESC%[32m "Remove Math Recognizer:" %ESC%[0m
+dism /Online /NoRestart /Remove-Capability /CapabilityName:MathRecognizer~~~~0.0.1.0
+echo -%ESC%[32m "Remove Onesync Feature: Exchange ActiveSync and Internet Mail Sync Engine:" %ESC%[0m
+dism /Online /NoRestart /Remove-Capability /CapabilityName:OneCoreUAP.OneSync~~~~0.0.1.0
+echo -%ESC%[32m Turn off Steps Recorder - Source %ESC%[36m "https://admx.help/?Category=Windows_10_2016&Policy=Microsoft.Policies.ApplicationCompatibility::AppCompatTurnOffUserActionRecord" %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppCompat" /f /v "DisableUAR" /t REG_DWORD /d "1"
-dism /Online /Remove-Capability /CapabilityName:App.StepsRecorder~~~~0.0.1.0
-:: Remove Feature: Windows Feature Experience Pack
-dism /Online /Remove-Capability /CapabilityName:Windows.Client.ShellComponents~~~~0.0.1.0
-:: "Remove Internet Printing:"
-:: "Remove Work Folders:"
-:: "Remove Contact Support:"
-:: "Remove Language Speech:"
+dism /Online /NoRestart /Remove-Capability /CapabilityName:App.StepsRecorder~~~~0.0.1.0
+echo -%ESC%[32m Remove Feature: Windows Feature Experience Pack %ESC%[0m
+dism /Online /NoRestart /Remove-Capability /CapabilityName:Windows.Client.ShellComponents~~~~0.0.1.0
+echo -%ESC%[32m "Remove Internet Printing:" %ESC%[0m
 
-:: Add Optional Features
-:: Add Feature: Print Fax Scan
-dism /Online /Add-Capability /CapabilityName:Print.Fax.Scan~~~~0.0.1.0
-:: Add Feature: WMIC. A Windows Management Instrumentation (WMI) command-line utility.
-dism /Online /Add-Capability /CapabilityName:WMIC~~~~
-:: Add  .NET Framework
-dism /Online /Add-Capability /CapabilityName:NetFX3~~~~
+echo -%ESC%[32m "Remove Work Folders:" %ESC%[0m
 
-:: Enable High Performance Power Scheme
+echo -%ESC%[32m "Remove Contact Support:" %ESC%[0m
+
+echo -%ESC%[32m "Remove Language Speech:" %ESC%[0m
+
+echo %ESC%[35m Add Optional Features %ESC%[0m
+echo -%ESC%[32m Add Feature: Print Fax Scan %ESC%[0m
+dism /Online /NoRestart /Add-Capability /CapabilityName:Print.Fax.Scan~~~~0.0.1.0
+echo -%ESC%[32m Add Feature: WMIC. A Windows Management Instrumentation (WMI) command-line utility. %ESC%[0m
+dism /Online /NoRestart /Add-Capability /CapabilityName:WMIC~~~~
+echo -%ESC%[32m Add .NET Framework %ESC%[0m
+dism /Online /NoRestart /Add-Capability /CapabilityName:NetFX3~~~~
+
+echo %ESC%[35m Enable High Performance Power Scheme %ESC%[0m
 powercfg /l
 powercfg /s 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c
 powercfg /x monitor-timeout-ac 10
@@ -192,10 +254,10 @@ powercfg /x disk-timeout-ac 20
 powercfg /x disk-timeout-dc 20
 powercfg /x standby-timeout-ac 0
 powercfg /x standby-timeout-dc 15
-:: Critical battery action: No action is taken when the critical battery level is reached.
+echo -%ESC%[32m Critical battery action: No action is taken when the critical battery level is reached. %ESC%[0m
 powercfg -setdcvalueindex SCHEME_CURRENT SUB_BATTERY BATACTIONCRIT 0 
 
-:: Change to Dark Theme:
+echo -%ESC%[35m Change to Dark Theme: %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /f /v "AppsUseLightTheme" /t REG_DWORD /d 0
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /f /v "SystemUsesLightTheme" /t REG_DWORD /d 0
 reg add "HKCU\Control Panel\Colors" /f /v "Background" /t REG_SZ /d "0 0 0"
@@ -216,12 +278,12 @@ reg add "HKCU\Software\Microsoft\Windows\DWM" /f /v "ColorPrevalence" /t REG_DWO
 reg add "HKCU\Software\Microsoft\Windows\DWM" /f /v "EnableAeroPeek" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\DWM" /f /v "EnableWindowColorization" /t REG_DWORD /d 1
 
-:: Quiet down Windows Security stopping unnecessary notifications
+echo -%ESC%[32m Quiet down Windows Security stopping unnecessary notifications %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows Defender Security Center\Account protection" /f /v "DisableNotifications" /t REG_DWORD /d "1"
 reg add "HKCU\Software\Microsoft\Windows Defender Security Center\Account protection" /f /v "DisableWindowsHelloNotifications" /t REG_DWORD /d "1"
 reg add "HKCU\Software\Microsoft\Windows Defender Security Center\Account protection" /f /v "DisableDynamiclockNotifications" /t REG_DWORD /d "1"
 
-:: Disable Collect Activity History: Created by: Shawn Brink on: December 14th 2017; Tutorial: https://www.tenforums.com/tutorials/100341-enable-disable-collect-activity-history-windows-10-a.html
+echo -%ESC%[32m Disable Collect Activity History: Created by: Shawn Brink on: December 14th 2017; Tutorial: %ESC%[36m https://www.tenforums.com/tutorials/100341-enable-disable-collect-activity-history-windows-10-a.html %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\System" /f /v "EnableActivityFeed" /t REG_DWORD /d 0
 reg add "HKLM\Software\Policies\Microsoft\Windows\System" /f /v "PublishUserActivities" /t REG_DWORD /d 0
 reg add "HKLM\Software\Policies\Microsoft\Windows\System" /f /v "UploadUserActivities" /t REG_DWORD /d 0
@@ -230,139 +292,139 @@ reg add "HKLM\Software\WOW6432Node\Policies\Microsoft\Windows\System" /f /v "Upl
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Privacy" /f /v "TailoredExperiencesWithDiagnosticDataEnabled" /t REG_DWORD /d 0
 reg add "HKCU\Software\Policies\Microsoft\Windows\CloudContent" /f /v "DisableTailoredExperiencesWithDiagnosticData" /t REG_DWORD /d 1
 
-:: Add Windows Defender ExclusionPath to enable host protection:
+echo -%ESC%[32m Add Windows Defender ExclusionPath to enable host protection: %ESC%[0m
 powershell -inputformat none -outputformat none -NonInteractive -Command "Add-MpPreference -ExclusionPath '%UserProfile%\Downloads\WinClean\'"
 powershell -inputformat none -outputformat none -NonInteractive -Command "Add-MpPreference -ExclusionPath 'D:\Microsoft\Downloads\WinClean\'"
 powershell -inputformat none -outputformat none -NonInteractive -Command "Add-MpPreference -ExclusionPath '%SystemRoot%\System32\drivers\etc\hosts'"
 
-:: Transfer Hosts File:
+echo -%ESC%[32m Transfer Hosts File: %ESC%[0m
 copy /D /V /Y hosts %SystemRoot%\System32\drivers\etc\hosts
 
-:: Turn off background apps + Privacy settings; Created by: Shawn Brink; Created on: October 17th 2016: Tutorial: http://www.tenforums.com/tutorials/7225-background-apps-turn-off-windows-10-a.html
+echo -%ESC%[32m Turn off background apps + Privacy settings; Created by: Shawn Brink; Created on: October 17th 2016: Tutorial: %ESC%[36m http://www.tenforums.com/tutorials/7225-background-apps-turn-off-windows-10-a.html %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /f /v "GlobalUserDisabled" /t REG_DWORD /d 1
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\DeviceAccess\Global\{E5323777-F976-4f5b-9B55-B94699C46E44}" /f /v "Value" /t REG_SZ /d "Deny"
 reg add "HKLM\Software\Microsoft\Speech_OneCore\Preferences" /f /v "VoiceActivationOn" /t REG_DWORD /d 0
 reg add "HKLM\Software\Microsoft\Speech_OneCore\Preferences" /f /v "ModelDownloadAllowed" /t REG_DWORD /d 0
 
-:: Turn Off Website Access of Language List: Created by: Shawn Brink on: April 27th 2017; Tutorial: https://www.tenforums.com/tutorials/82980-turn-off-website-access-language-list-windows-10-a.html
-reg add "HKCU\Control Panel\International\User Profile" /f /v "HttpAcceptLanguageOptOut" /t REG_DWORD /d 1
+echo -%ESC%[32m Turn Off Website Access of Language List: Created by: Shawn Brink on: April 27th 2017; Tutorial: %ESC%[36m https://www.tenforums.com/tutorials/82980-turn-off-website-access-language-list-windows-10-a.html %ESC%[0m
+reg add "HKCU\Control Panel\International\User Profile" /f /v "%ESC%[36m httpAcceptLanguageOptOut" /t REG_DWORD /d 1
 reg add "HKCU\Keyboard Layout\Toggle" /f /v "Language Hotkey" /t REG_SZ /d "2"
 reg add "HKCU\Keyboard Layout\Toggle" /f /v "Hotkey" /t REG_SZ /d "2"
 reg add "HKCU\Keyboard Layout\Toggle" /f /v "Layout Hotkey" /t REG_SZ /d "3"
 
-:: Settings » privacy » general » app permissions: "Setting App Permissions."
-:: Next statements will deny access to the following apps under Privacy - - Setting anyone of these back to allow allows toggle functionality
+echo %ESC%[35m Settings » privacy » general » app permissions: "Setting App Permissions." %ESC%[0m
+echo -%ESC%[32m Next statements will deny access to the following apps under Privacy - - Setting anyone of these back to allow allows toggle functionality %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\activity" /f /v "Value" /t REG_SZ /d Deny
-::  Disable app diag info about your other apps
+echo -%ESC%[32m Disable app diag info about your other apps %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\appDiagnostics" /f /v "Value" /t REG_SZ /d Deny
-::  Do not allow apps to access calendar
+echo -%ESC%[32m Do not allow apps to access calendar %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\appointments" /f /v "Value" /t REG_SZ /d Deny
-::  do not allow apps to access other devices
+echo -%ESC%[32m Do not allow apps to access other devices %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\bluetooth" /f /v "Value" /t REG_SZ /d Deny
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\bluetoothSync" /f /v "Value" /t REG_SZ /d Deny
-::  do not allow apps to access your file system
+echo -%ESC%[32m Do not allow apps to access your file system %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\broadFileSystemAccess" /f /v "Value" /t REG_SZ /d Deny
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\cellularData" /f /v "Value" /t REG_SZ /d Deny
-::  Do not allow apps to access messaging
+echo -%ESC%[32m Do not allow apps to access messaging %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\chat" /f /v "Value" /t REG_SZ /d Deny
-::  do not allow apps to access your contacts
+echo -%ESC%[32m Do not allow apps to access your contacts %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\contacts" /f /v "Value" /t REG_SZ /d Deny
-::  do not allow apps to access Documents
+echo -%ESC%[32m Do not allow apps to access Documents %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\documentsLibrary" /f /v "Value" /t REG_SZ /d Deny
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\downloadsFolder" /f /v "Value" /t REG_SZ /d Deny
-::  Do not Allow apps to access email 
+echo -%ESC%[32m Do not Allow apps to access email %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\email" /f /v "Value" /t REG_SZ /d Deny
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\gazeInput" /f /v "Value" /t REG_SZ /d Deny
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\humanInterfaceDevice" /f /v "Value" /t REG_SZ /d Deny
-:: Disable Location Tracking
+echo -%ESC%[32m Disable Location Tracking %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" /f /v "Value" /t REG_SZ /d Deny
 reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Sensor\Overrides\{BFA794E4-F964-4FDB-90F6-51056BFE4B44}" /f /v "SensorPermissionState" /t REG_DWORD /d 0
 reg add "HKLM\System\CurrentControlSet\Services\lfsvc\Service\Configuration" /f /v "Status" /t REG_DWORD /d 0
 reg add "HKLM\System\Maps" /f /v "AutoUpdateEnabled" /t REG_DWORD /d 0
-::  Do not allow apps to access microphone
+echo -%ESC%[32m Do not allow apps to access microphone %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone" /f /v "Value" /t REG_SZ /d Allow
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\musicLibrary" /f /v "Value" /t REG_SZ /d Deny
-::  Do not allow apps to access call history
+echo -%ESC%[32m Do not allow apps to access call history %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\phoneCall" /f /v "Value" /t REG_SZ /d Deny
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\phoneCallHistory" /f /v "Value" /t REG_SZ /d Deny
-::  do not allow apps to access Pictures
+echo -%ESC%[32m Do not allow apps to access Pictures %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\picturesLibrary" /f /v "Value" /t REG_SZ /d Deny
-::  Do Not allow apps to access radio
+echo -%ESC%[32m Do not allow apps to access radio %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\radios" /f /v "Value" /t REG_SZ /d Deny
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\sensors.custom" /f /v "Value" /t REG_SZ /d Deny
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\serialCommunication" /f /v "Value" /t REG_SZ /d Deny
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\usb" /f /v "Value" /t REG_SZ /d Deny
-::  Do not allow apps to access Account Information
+echo -%ESC%[32m Do not allow apps to access Account Information %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\userAccountInformation" /f /v "Value" /t REG_SZ /d Deny
-::  Do not allow apps to access tasks
+echo -%ESC%[32m Do not allow apps to access tasks %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\userDataTasks" /f /v "Value" /t REG_SZ /d Deny
-::  Do not allow apps to access Notifications
+echo -%ESC%[32m Do not allow apps to access Notifications %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\userNotificationListener" /f /v "Value" /t REG_SZ /d Deny
-::  do not allow apps to access Videos
+echo -%ESC%[32m Do not allow apps to access Videos %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\videosLibrary" /f /v "Value" /t REG_SZ /d Deny
-::  App access turn off camera
+echo -%ESC%[32m App access turn off camera %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam" /f /v "Value" /t REG_SZ /d Allow
-::  App access turn off WIFI
+echo -%ESC%[32m App access turn off WIFI %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\wifiData" /f /v "Value" /t REG_SZ /d Deny
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\wiFiDirect" /f /v "Value" /t REG_SZ /d Deny
 
-:: Settings » privacy » general » windows permissions "Setting General Windows Permissions.": From https://admx.help/HKLM/Software/Policies/Microsoft/Windows/AppPrivacy
-:: Windows apps access user movements while running in the background
+echo %ESC%[35m Settings » privacy » general » windows permissions "Setting General Windows Permissions.": From %ESC%[36m https://admx.help/HKLM/Software/Policies/Microsoft/Windows/AppPrivacy %ESC%[0m
+echo -%ESC%[32m Windows apps access user movements while running in the background %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessBackgroundSpatialPerception" /t REG_DWORD /d 2
-:: Windows apps activate with voice while the system is locked
+echo -%ESC%[32m Windows apps activate with voice while the system is locked %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsActivateWithVoiceAboveLock" /t REG_DWORD /d 2
-:: Windows apps activate with voice
+echo -%ESC%[32m Windows apps activate with voice %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsActivateWithVoice" /t REG_DWORD /d 2
-:: Windows apps access an eye tracker device
+echo -%ESC%[32m Windows apps access an eye tracker device %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessGazeInput" /t REG_DWORD /d 2
-:: Windows apps access diagnostic information about other apps
+echo -%ESC%[32m Windows apps access diagnostic information about other apps %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsGetDiagnosticInfo" /t REG_DWORD /d 2
-:: Windows apps run in the background
+echo -%ESC%[32m Windows apps run in the background %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsRunInBackground" /t REG_DWORD /d 2
-:: Windows apps access trusted devices
+echo -%ESC%[32m Windows apps access trusted devices %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessTrustedDevices" /t REG_DWORD /d 2
-:: Windows apps access Tasks
+echo -%ESC%[32m Windows apps access Tasks %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessTasks" /t REG_DWORD /d 2
-:: Windows apps communicate with unpaired devices
+echo -%ESC%[32m Windows apps communicate with unpaired devices %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsSyncWithDevices" /t REG_DWORD /d 2
-:: Windows apps control radios
+echo -%ESC%[32m Windows apps control radios %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessRadios" /t REG_DWORD /d 2
-:: Windows apps make phone calls
+echo -%ESC%[32m Windows apps make phone calls %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessPhone" /t REG_DWORD /d 2
-:: Windows apps access notifications
+echo -%ESC%[32m Windows apps access notifications %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessNotifications" /t REG_DWORD /d 2
-:: Windows apps access motion
+echo -%ESC%[32m Windows apps access motion %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessMotion" /t REG_DWORD /d 2
-:: Windows apps access the microphone
+echo -%ESC%[32m Windows apps access the microphone %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessMicrophone" /t REG_DWORD /d 0
-:: Windows apps access messaging
+echo -%ESC%[32m Windows apps access messaging %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessMessaging" /t REG_DWORD /d 2
-:: Windows apps access location
+echo -%ESC%[32m Windows apps access location %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessLocation" /t REG_DWORD /d 2
-:: Windows apps turn off the screenshot border
+echo -%ESC%[32m Windows apps turn off the screenshot border %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessGraphicsCaptureWithoutBorder" /t REG_DWORD /d 2
-:: Windows apps take screenshots of various windows or displays
+echo -%ESC%[32m Windows apps take screenshots of various windows or displays %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessGraphicsCaptureProgrammatic" /t REG_DWORD /d 2
-:: Windows apps access email
+echo -%ESC%[32m Windows apps access email %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessEmail" /t REG_DWORD /d 2
-:: Windows apps access contacts
+echo -%ESC%[32m Windows apps access contacts %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessContacts" /t REG_DWORD /d 2
-:: Windows apps access the camera
+echo -%ESC%[32m Windows apps access the camera %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessCamera" /t REG_DWORD /d 0
-:: Windows apps access call history
+echo -%ESC%[32m Windows apps access call history %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessCallHistory" /t REG_DWORD /d 2
-:: Windows apps access the calendar
+echo -%ESC%[32m Windows apps access the calendar %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessCalendar" /t REG_DWORD /d 2
-:: Windows apps access account information
+echo -%ESC%[32m Windows apps access account information %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "LetAppsAccessAccountInfo" /t REG_DWORD /d 2
 reg add "HKLM\Software\Policies\Microsoft\Windows\AppPrivacy" /f /v "DoNotShowFeedbackNotifications" /t REG_DWORD /d 2
 
-:: Disable App Launch Tracking: Created by: Shawn Brink; Created on: January 3, 2022; Tutorial: https://www.elevenforum.com/t/enable-or-disable-app-launch-tracking-in-windows-11.3727/
+echo -%ESC%[32m Disable App Launch Tracking: Created by: Shawn Brink; Created on: January 3, 2022; Tutorial: %ESC%[36m https://www.elevenforum.com/t/enable-or-disable-app-launch-tracking-in-windows-11.3727/ %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "Start_TrackProgs" /t REG_DWORD /d 0
 reg add "HKCU\Software\Policies\Microsoft\Windows\EdgeUI" /f /v "DisableMFUTracking" /t REG_DWORD /d 1
 reg add "HKLM\Software\Policies\Microsoft\Windows\EdgeUI" /f /v "DisableMFUTracking" /t REG_DWORD /d 1
 
-:: Disabling Windows Notifications
+echo -%ESC%[32m Disabling Windows Notifications %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\PushNotifications" /f /v "DatabaseMigrationCompleted" /t REG_DWORD /d 1
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\PushNotifications" /f /v "ToastEnabled" /t REG_DWORD /d 1
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\PushNotifications" /f /v "NoCloudApplicationNotification" /t REG_DWORD /d 1
@@ -370,24 +432,24 @@ reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\PushNotifications" /f /v
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings" /f /v "NOC_GLOBAL_SETTING_ALLOW_CRITICAL_TOASTS_ABOVE_LOCK" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings" /f /v "NOC_GLOBAL_SETTING_ALLOW_TOASTS_ABOVE_LOCK" /t REG_DWORD /d 0
 
-:: Removes 3D Objects from the 'My Computer' submenu in explorer
+echo -%ESC%[32m Removes 3D Objects from the 'My Computer' submenu in explorer %ESC%[0m
 reg delete "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{0DB7E03F-FC29-4DC6-9020-FF41B59E513A}" /f
 reg delete "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{0DB7E03F-FC29-4DC6-9020-FF41B59E513A}" /f
 
-:: settings » privacy » general » let apps use my ID ...
+echo -%ESC%[32m settings » privacy » general » let apps use my ID ... %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /f /v "Enabled" /t REG_DWORD /d 0
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /f /v "Enabled" /t REG_DWORD /d 0
 reg add "HKLM\Software\Policies\Microsoft\Windows\AdvertisingInfo" /f /v "DisabledByGroupPolicy" /t REG_DWORD /d 1
 reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /f /v "Id"
 
-:: Turn Off Personal Inking and Typing Dictionary: Created by: Shawn Brink; Created on: January 5, 2022; Tutorial: https://www.elevenforum.com/t/enable-or-disable-personal-inking-and-typing-dictionary-in-windows-11.5564/
+echo -%ESC%[32m Turn Off Personal Inking and Typing Dictionary: Created by: Shawn Brink; Created on: January 5, 2022; Tutorial: %ESC%[36m https://www.elevenforum.com/t/enable-or-disable-personal-inking-and-typing-dictionary-in-windows-11.5564/ %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\CPSS\Store\InkingAndTypingPersonalization" /f /v "Value" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\InputPersonalization" /f /v "AcceptedPrivacyPolicy" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\InputPersonalization" /f /v "RestrictImplicitTextCollection" /t REG_DWORD /d 1
 reg add "HKCU\Software\Microsoft\InputPersonalization" /f /v "RestrictImplicitInkCollection" /t REG_DWORD /d 1
 reg add "HKCU\Software\Microsoft\InputPersonalization\TrainedDataStore" /f /v "HarvestContacts" /t REG_DWORD /d 0
 
-:: Disable Windows Search Box... and web search in the search box Created by: Shawn Brink on: May 4th 2019 Tutorial: https://www.tenforums.com/tutorials/2854-hide-show-search-box-search-icon-taskbar-windows-10-a.html
+echo -%ESC%[32m Disable Windows Search Box... and web search in the search box Created by: Shawn Brink on: May 4th 2019 Tutorial: %ESC%[36m https://www.tenforums.com/tutorials/2854-hide-show-search-box-search-icon-taskbar-windows-10-a.html %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /f /v "BingSearchEnabled" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /f /v "WebControlStatus" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /f /v "WebControlSecondaryStatus" /t REG_DWORD /d 0
@@ -396,16 +458,16 @@ reg add "HKLM\Software\Policies\Microsoft\Windows\Windows Search" /f /v "SearchO
 reg add "HKCU\Software\Policies\Microsoft\Windows\Explorer" /f /v "DisableSearchBoxSuggestions" /t REG_DWORD /d 1
 reg add "HKLM\Software\Policies\Microsoft\Windows\Explorer" /f /v "DisableSearchBoxSuggestions" /t REG_DWORD /d 1
 
-:: Enable Admin Shares...
+echo -%ESC%[32m Enable Admin Shares... %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\system" /f /v LocalAccountTokenFilterPolicy /t REG_DWORD /d 1
 
-:: Remove the Limit local account use of blank passwords to console logon only...
+echo -%ESC%[32m Remove the Limit local account use of blank passwords to console logon only... %ESC%[0m
 reg add "HKLM\System\CurrentControlSet\Control\Lsa" /f /v "LimitBlankPasswordUse" /t REG_DWORD /d 0
 
-:: Enable Local Security Authority Protection...
+echo -%ESC%[32m Enable Local Security Authority Protection... %ESC%[0m
 reg add "HKLM\System\CurrentControlSet\Control\Lsa" /f /v RunAsPPL /t REG_DWORD /d 1
 
-:: Disable Windows Feedback...
+echo -%ESC%[32m Disable Windows Feedback... %ESC%[0m
 reg add "HKCU\Software\Microsoft\Siuf\Rules" /f /v "NumberOfSIUFInPeriod" /t REG_DWORD /d 0
 reg delete "HKCU\Software\Microsoft\Siuf\Rules" /f /v "PeriodInNanoSeconds"
 reg add "HKLM\System\ControlSet001\Control\WMI\AutoLogger\AutoLogger-Diagtrack-Listener" /f /v "Start" /t REG_DWORD /d 0
@@ -415,28 +477,28 @@ rem reg add "HKLM\Software\Policies\Microsoft\MicrosoftEdge\PhishingFilter" /f /
 rem reg add "HKCU\Software\Microsoft\Internet Explorer\PhishingFilter" /f /v "EnabledV9" /t REG_DWORD /d 0
 rem reg add "HKLM\Software\Policies\Microsoft\Windows\System" /f /v "EnableSmartScreen" /t REG_DWORD /d 0
 
-:: Disabling Cortana...
+echo -%ESC%[32m Disabling Cortana... %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\Windows Search" /f /v "AllowCortana" /t REG_DWORD /d 0
-reg add "HKLM\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules"  /v "{2765E0F4-2918-4A46-B9C9-43CDD8FCBA2B}" /t REG_SZ /d  "BlockCortana|Action=Block|Active=TRUE|Dir=Out|App=C:\windows\systemapps\microsoft.windows.cortana_cw5n1h2txyewy\searchui.exe|Name=Search  and Cortana  application|AppPkgId=S-1-15-2-1861897761-1695161497-2927542615-642690995-327840285-2659745135-2630312742|" /f
+reg add "HKLM\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules" /v "{2765E0F4-2918-4A46-B9C9-43CDD8FCBA2B}" /t REG_SZ /d "BlockCortana|Action=Block|Active=TRUE|Dir=Out|App=C:\windows\systemapps\microsoft.windows.cortana_cw5n1h2txyewy\searchui.exe|Name=Search and Cortana application|AppPkgId=S-1-15-2-1861897761-1695161497-2927542615-642690995-327840285-2659745135-2630312742|" /f
 
-:: Turn off Windows Error reporting...
+echo -%ESC%[32m Turn off Windows Error reporting... %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\Windows Error Reporting" /f /v "Disabled" /t REG_DWORD /d 1
 reg add "HKLM\Software\Microsoft\Windows\Windows Error Reporting" /f /v "Disabled" /t REG_DWORD /d 1
 
-:: No license checking... removed now
+echo -%ESC%[32m No license checking... removed now %ESC%[0m
 rem reg add "HKLM\Software\Policies\Microsoft\Windows NT\CurrentVersion\Software Protection Platform" /f /v "NoGenTicket" /t REG_DWORD /d 1
 reg delete "HKLM\Software\Policies\Microsoft\Windows NT\CurrentVersion\Software Protection Platform" /f
 
-:: Disable app access to Voice activation...
+echo -%ESC%[32m Disable app access to Voice activation... %ESC%[0m
 reg add "HKCU\Software\Microsoft\Speech_OneCore\Settings\VoiceActivation\UserPreferenceForAllApps" /f /v "AgentActivationEnabled" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Speech_OneCore\Settings\VoiceActivation\UserPreferenceForAllApps" /f /v "AgentActivationOnLockScreenEnabled" /t REG_DWORD /d 0
 
-:: Disable sync...
+echo -%ESC%[32m Disable sync... %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\SettingSync" /f /v "DisableSettingSync" /t REG_DWORD /d 2
 reg add "HKLM\Software\Policies\Microsoft\Windows\SettingSync" /f /v "DisableSettingSyncUserOverride" /t REG_DWORD /d 1
 del /F /Q "C:\Windows\System32\Tasks\Microsoft\Windows\SettingSync\*" 
 
-:: No Windows Tips...
+echo -%ESC%[32m No Windows Tips... %ESC%[0m
 reg add "HKLM\Software\Policies\Microsoft\Windows\CloudContent" /f /v "DisableSoftLanding" /t REG_DWORD /d 1
 reg add "HKLM\Software\Policies\Microsoft\Windows\CloudContent" /f /v "DisableWindowsSpotlightFeatures" /t REG_DWORD /d 1
 reg add "HKLM\Software\Policies\Microsoft\Windows\CloudContent" /f /v "DisableWindowsConsumerFeatures" /t REG_DWORD /d 1
@@ -445,10 +507,10 @@ reg add "HKLM\Software\Policies\Microsoft\Windows\DataCollection" /f /v "AllowTe
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /f /v "AllowTelemetry" /t REG_DWORD /d 0
 reg add "HKLM\Software\Policies\Microsoft\WindowsInkWorkspace" /f /v "AllowSuggestedAppsInWindowsInkWorkspace" /t REG_DWORD /d 0
 
-:: Disabling live tiles...
+echo -%ESC%[32m Disabling live tiles... %ESC%[0m
 reg add "HKCU\Software\Policies\Microsoft\Windows\CurrentVersion\PushNotifications" /f /v "NoTileApplicationNotification" /t REG_DWORD /d 1
 
-:: Debloat Microsoft Edge using Registry - Disables various telemetry options, popups, and other annoyances in Edge.
+echo -%ESC%[32m Debloat Microsoft Edge using Registry - Disables various telemetry options, popups, and other annoyances in Edge. %ESC%[0m
 reg add "HKLM\Software\Microsoft\EdgeUpdate" /f /v "DoNotUpdateToEdgeWithChromium" /t REG_DWORD /d 1
 reg add "HKLM\Software\Policies\Microsoft\EdgeUpdate" /f /v "CreateDesktopShortcutDefault" /t REG_DWORD /d 0
 reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "EdgeEnhanceImagesEnabled" /t REG_DWORD /d 0
@@ -472,31 +534,31 @@ reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "CryptoWalletEnabled" /t R
 reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "ConfigureDoNotTrack" /t REG_DWORD /d 1
 reg add "HKLM\Software\Policies\Microsoft\Edge" /f /v "WalletDonationEnabled" /t REG_DWORD /d 0
 
-:: settings » privacy » general » speech, inking, typing
+echo -%ESC%[32m settings » privacy » general » speech, inking, typing %ESC%[0m
 reg add "HKCU\Software\Microsoft\Personalization\Settings" /f /v "AcceptedPrivacyPolicy" /t REG_DWORD /d 0
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\TextInput" /f /v "AllowLinguisticDataCollection" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Input\TIPC" /f /v "Enabled" /t REG_DWORD /d 0
 
-:: Disables Autoplay and Turn Off AutoRun in Windows
+echo -%ESC%[32m Disables Autoplay and Turn Off AutoRun in Windows %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" /f /v "DisableAutoplay" /t REG_DWORD /d 1
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "NoDriveTypeAutoRun" /t REG_DWORD /d "255"
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "NoDriveTypeAutoRun" /t REG_DWORD /d "255"
 
-:: Disable Low Disk Space Checks in Windows - https://www.lifewire.com/how-to-disable-low-disk-space-checks-in-windows-vista-2626331
+echo -%ESC%[32m Disable Low Disk Space Checks in Windows -%ESC%[36m https://www.lifewire.com/how-to-disable-low-disk-space-checks-in-windows-vista-2626331 %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "NoLowDiskSpaceChecks" /t REG_DWORD /d 1
 
-:: Windows 11 Explorer use compact mode and restore Classic Context Menu
+echo -%ESC%[32m Windows 11 Explorer use compact mode and restore Classic Context Menu %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v UseCompactMode /t REG_DWORD /d 1
 reg add "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f
 
-:: Disables Meet Now Chat and Microsoft Teams; Remove Chat from the taskbar in Windows 11
+echo -%ESC%[32m Disables Meet Now Chat and Microsoft Teams; Remove Chat from the taskbar in Windows 11 %ESC%[0m
 reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /f /v "com.squirrel.Teams.Teams"
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "HideSCAMeetNow" /t REG_DWORD /d 1
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "HideSCAMeetNow" /t REG_DWORD /d 1
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v TaskbarMn /t REG_DWORD /d 0
 reg add "HKLM\Software\Policies\Microsoft\Windows\Windows Chat" /f /v ChatIcon /t REG_DWORD /d 3
 
-:: Turn off News and Interests
+echo -%ESC%[32m Turn off News and Interests %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Feeds" /f /v "ShellFeedsTaskbarViewMode" /t REG_DWORD /d 2
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "TaskbarDa" /t REG_DWORD /d 0
 reg add "HKLM\Software\Policies\Microsoft\Windows\Windows Feeds" /f /v "EnableFeeds" /t REG_DWORD /d 0
@@ -504,11 +566,11 @@ reg add "HKLM\Software\Policies\Microsoft\Windows\Dsh" /f /v "AllowNewsAndIntere
 powershell -noprofile -executionpolicy bypass -command "Get-AppxPackage -Name *WebExperience* | Foreach {Remove-AppxPackage $_.PackageFullName}"
 powershell -noprofile -executionpolicy bypass -command "Get-ProvisionedAppxPackage -Online | Where-Object { $_.PackageName -match 'WebExperience' } | ForEach-Object { Remove-ProvisionedAppxPackage -Online -PackageName $_.PackageName }"
 
-:: Turn off Suggest Ways I can finish setting up my device: Created by: Shawn Brink on: July 31, 2019; Tutorial: https://www.tenforums.com/tutorials/137645-turn-off-get-even-more-out-windows-suggestions-windows-10-a.html
+echo -%ESC%[32m Turn off Suggest Ways I can finish setting up my device: Created by: Shawn Brink on: July 31, 2019; Tutorial: %ESC%[36m https://www.tenforums.com/tutorials/137645-turn-off-get-even-more-out-windows-suggestions-windows-10-a.html %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement" /f /v "ScoobeSystemSettingEnabled" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SubscribedContent-310093Enabled" /t REG_DWORD /d 0
 
-:: Turn off Game Mode: Created by: Shawn Brink on: January 27th 2016; Updated on: November 6th 2017; Tutorial: https://www.tenforums.com/tutorials/75936-turn-off-game-mode-windows-10-a.html
+echo -%ESC%[32m Turn off Game Mode: Created by: Shawn Brink on: January 27th 2016; Updated on: November 6th 2017; Tutorial: %ESC%[36m https://www.tenforums.com/tutorials/75936-turn-off-game-mode-windows-10-a.html %ESC%[0m
 reg add "HKCU\Software\Microsoft\GameBar" /f /v "AllowAutoGameMode" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\GameBar" /f /v "AutoGameModeEnabled" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\GameDVR" /f /v "AppCaptureEnabled" /t REG_DWORD /d 0
@@ -518,35 +580,35 @@ reg add "HKCU\System\GameConfigStore" /f /v "GameDVR_HonorUserFSEBehaviorMode" /
 reg add "HKCU\System\GameConfigStore" /f /v "GameDVR_FSEBehavior" /t REG_DWORD /d 2
 reg add "HKLM\Software\Policies\Microsoft\Windows\GameDVR" /f /v "AllowGameDVR" /t REG_DWORD /d 0
 
-:: Turn off Cloud Content Search for Microsoft Account: Created by: Shawn Brink on: September 18, 2022; Tutorial: https://www.elevenforum.com/t/enable-or-disable-cloud-content-search-in-windows-11.5378/
+echo -%ESC%[32m Turn off Cloud Content Search for Microsoft Account: Created by: Shawn Brink on: September 18, 2022; Tutorial: %ESC%[36m https://www.elevenforum.com/t/enable-or-disable-cloud-content-search-in-windows-11.5378/ %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\SearchSettings" /f /v "IsMSACloudSearchEnabled" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\SearchSettings" /f /v "IsAADCloudSearchEnabled" /t REG_DWORD /d 0
 reg add "HKLM\Software\Policies\Microsoft\Windows\Windows Search" /f /v "AllowCloudSearch" /t REG_DWORD /d 0
 
-:: Removing CloudStore from registry if it exists
+echo -%ESC%[32m Removing CloudStore from registry if it exists %ESC%[0m
 taskkill /f /im explorer.exe
 reg delete HKCU\Software\Microsoft\Windows\CurrentVersion\CloudStore /f
 start explorer.exe
 
-:: Turn Off Device Search History: Created by: Shawn Brink on: September 18, 2020; Tutorial: https://www.tenforums.com/tutorials/133365-turn-off-device-search-history-windows-10-a.html
+echo -%ESC%[32m Turn Off Device Search History: Created by: Shawn Brink on: September 18, 2020; Tutorial: %ESC%[36m https://www.tenforums.com/tutorials/133365-turn-off-device-search-history-windows-10-a.html %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\SearchSettings" /f /v "IsDeviceSearchHistoryEnabled" /t REG_DWORD /d 0
 
-:: Remove Duplicate Drives in Navigation Pane of File Explorer: Created by: Shawn Brink: Tutorial: https://www.tenforums.com/tutorials/4675-drives-navigation-pane-add-remove-windows-10-a.html; https://www.winhelponline.com/blog/drives-listed-twice-explorer-navigation-pane/
+echo -%ESC%[32m Remove Duplicate Drives in Navigation Pane of File Explorer: Created by: Shawn Brink: Tutorial: %ESC%[36m https://www.tenforums.com/tutorials/4675-drives-navigation-pane-add-remove-windows-10-a.html; %ESC%[36m https://www.winhelponline.com/blog/drives-listed-twice-explorer-navigation-pane/ %ESC%[0m
 reg delete "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\DelegateFolders" /f /v "{F5FB2C77-0E2F-4A16-A381-3E560C68BC83}"
 reg delete "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\DelegateFolders" /f /v "{F5FB2C77-0E2F-4A16-A381-3E560C68BC83}"
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\NonEnum" /f /v "{F5FB2C77-0E2F-4A16-A381-3E560C68BC83}" /t REG_DWORD /d 1
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\NonEnum" /f /v "{F5FB2C77-0E2F-4A16-A381-3E560C68BC83}" /t REG_DWORD /d 1
 
-:: Disable Pin Store to Taskbar for All Users: Created by: Shawn Brink; Tutorial: http://www.tenforums.com/tutorials/47742-store-enable-disable-pin-taskbar-windows-8-10-a.html; https://www.elevenforum.com/t/enable-or-disable-show-pinned-items-on-taskbar-in-windows-11.3650/
+echo -%ESC%[32m Disable Pin Store to Taskbar for All Users: Created by: Shawn Brink; Tutorial: %ESC%[36m http://www.tenforums.com/tutorials/47742-store-enable-disable-pin-taskbar-windows-8-10-a.html; %ESC%[36m https://www.elevenforum.com/t/enable-or-disable-show-pinned-items-on-taskbar-in-windows-11.3650/ %ESC%[0m
 reg add "HKCU\Software\Policies\Microsoft\Windows\Explorer" /f /v "NoPinningStoreToTaskbar" /t REG_DWORD /d 1
 reg add "HKLM\Software\Policies\Microsoft\Windows\Explorer" /f /v "NoPinningStoreToTaskbar" /t REG_DWORD /d 1
 
-:: Disable Pin People icon on Taskbar: Created by: Shawn Brink; Created on: February 23rd 2018ș Tutorial: https://www.tenforums.com/tutorials/104877-enable-disable-people-bar-taskbar-windows-10-a.html
+echo -%ESC%[32m Disable Pin People icon on Taskbar: Created by: Shawn Brink; Created on: February 23rd 2018ș Tutorial: %ESC%[36m https://www.tenforums.com/tutorials/104877-enable-disable-people-bar-taskbar-windows-10-a.html %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People" /f /v "PeopleBand" /t REG_DWORD /d "0"
 reg add "HKCU\Software\Policies\Microsoft\Windows\Explorer" /f /v "HidePeopleBar" /t REG_DWORD /d "1"
 reg add "HKLM\Software\Policies\Microsoft\Windows\Explorer" /f /v "HidePeopleBar" /t REG_DWORD /d "1"
 
-:: Choose which folders appear on start: To force a pinned folder to be visible, set the corresponding registry values to 1 (both values must set); to force it to be hidden, set the "_ProviderSet" value to 1 and the other one to 0; to let the user choose "_ProviderSet" value to 0 or delete the values. https://social.technet.microsoft.com/Forums/en-US/dbe85f3d-52a8-4852-a784-7bac64a9fa78/controlling-1803-quotchoose-which-folders-appear-on-startquot-settings?forum=win10itprosetup#3b488a59-cefe-4947-8529-944475c452d5
+echo -%ESC%[32m Choose which folders appear on start: To force a pinned folder to be visible, set the corresponding registry values to 1 (both values must set); to force it to be hidden, set the "_ProviderSet" value to 1 and the other one to 0; to let the user choose "_ProviderSet" value to 0 or delete the values. %ESC%[36m https://social.technet.microsoft.com/Forums/en-US/dbe85f3d-52a8-4852-a784-7bac64a9fa78/controlling-1803-quotchoose-which-folders-appear-on-startquot-settings?forum=win10itprosetup#3b488a59-cefe-4947-8529-944475c452d5 %ESC%[0m
 reg add "HKLM\Software\Microsoft\PolicyManager\current\device\start" /f /v "AllowPinnedFolderDocuments" /t REG_DWORD /d 0
 reg add "HKLM\Software\Microsoft\PolicyManager\current\device\start" /f /v "AllowPinnedFolderDocuments_ProviderSet" /t REG_DWORD /d 1
 reg add "HKLM\Software\Microsoft\PolicyManager\current\device\start" /f /v "AllowPinnedFolderDownloads" /t REG_DWORD /d 0
@@ -566,11 +628,11 @@ reg add "HKLM\Software\Microsoft\PolicyManager\current\device\start" /f /v "Allo
 reg add "HKLM\Software\Microsoft\PolicyManager\current\device\start" /f /v "AllowPinnedFolderVideos" /t REG_DWORD /d 0
 reg add "HKLM\Software\Microsoft\PolicyManager\current\device\start" /f /v "AllowPinnedFolderVideos_ProviderSet" /t REG_DWORD /d 0
 
-:: Add User's Files Desktop Icon: Created by: Shawn Brink; Tutorial: http://www.tenforums.com/tutorials/6942-desktop-icons-add-remove-windows-10-a.html
+echo -%ESC%[32m Add User's Files Desktop Icon: Created by: Shawn Brink; Tutorial: %ESC%[36m http://www.tenforums.com/tutorials/6942-desktop-icons-add-remove-windows-10-a.html %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel" /f /v "{59031a47-3f72-44a7-89c5-5595fe6b30ee}" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu" /f /v "{59031a47-3f72-44a7-89c5-5595fe6b30ee}" /t REG_DWORD /d 0
 
-:: Hide Unused User's Profile Personal Folders like 3D,Saved Games,Searches: Created by: Shawn Brink; Created on: April 13th 2018; Tutorial: https://www.tenforums.com/tutorials/108032-hide-show-user-profile-personal-folders-windows-10-file-explorer.html
+echo -%ESC%[32m Hide Unused User's Profile Personal Folders like 3D,Saved Games,Searches: Created by: Shawn Brink; Created on: April 13th 2018; Tutorial: %ESC%[36m https://www.tenforums.com/tutorials/108032-hide-show-user-profile-personal-folders-windows-10-file-explorer.html %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{31C0DD25-9439-4F12-BF41-7FF4EDA38722}\PropertyBag" /f /v "ThisPCPolicy" /d "Hide"
 reg add "HKLM\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{31C0DD25-9439-4F12-BF41-7FF4EDA38722}\PropertyBag" /f /v "ThisPCPolicy" /d "Hide"
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{4C5C32FF-BB9D-43b0-B5B4-2D72E54EAAA4}\PropertyBag" /f /v "ThisPCPolicy" /d "Hide"
@@ -578,83 +640,83 @@ reg add "HKLM\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\Fol
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{7d1d3a04-debb-4115-95cf-2f29da2920da}\PropertyBag" /f /v "ThisPCPolicy" /d "Hide"
 reg add "HKLM\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\FolderDescriptions\{7d1d3a04-debb-4115-95cf-2f29da2920da}\PropertyBag" /f /v "ThisPCPolicy" /d "Hide"
 
-:: Windows Explorer Tweaks: Hidden Files,Expand to Current
-:: Change your Visual Effects Settings: https://www.tenforums.com/tutorials/6377-change-visual-effects-settings-windows-10-a.html
+:: Windows Explorer Tweaks: Hidden Files,Expand to Current %ESC%[0m
+:: Change your Visual Effects Settings: %ESC%[36m https://www.tenforums.com/tutorials/6377-change-visual-effects-settings-windows-10-a.html %ESC%[0m
 :: 0 = Let Windows choose what’s best for my computer
 :: 1 = Adjust for best appearance
 :: 2 = Adjust for best performance
-:: 3 = Custom ;This disables the following 8 settings:Animate controls and elements inside windows;Fade or slide menus into view;Fade or slide ToolTips into view;Fade out menu items after clicking;Show shadows under mouse pointer;Show shadows under windows;Slide open combo boxes;Smooth-scroll list boxes
-:: Open File Explorer to: This PC
+:: 3 = Custom ;This disables the following 8 settings:Animate controls and elements inside windows;Fade or slide menus into view;Fade or slide ToolTips into view;Fade out menu items after clicking;Show shadows under mouse pointer;Show shadows under windows;Slide open combo boxes;Smooth-scroll list boxes %ESC%[0m
+echo -%ESC%[32m Open File Explorer to: This PC %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "LaunchTo" /t REG_DWORD /d 1
-:: Show hidden files, folders, and drives
+echo -%ESC%[32m Show hidden files, folders, and drives %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "Hidden" /t REG_DWORD /d 1
-:: Hide protected operating system files (Recommended)
+echo -%ESC%[32m Hide protected operating system files (Recommended) %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "ShowSuperHidden" /t REG_DWORD /d 0
-:: Hide Desktop icons
+echo -%ESC%[32m Hide Desktop icons %ESC%[0m
 :: reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "HideIcons" /t REG_DWORD /d 1
-:: Hide extensions for known file types
+echo -%ESC%[32m Hide extensions for known file types %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "HideFileExt" /t REG_DWORD /d 0
-:: Navigation pane: Expand to open folder
+echo -%ESC%[32m Navigation pane: Expand to open folder %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "NavPaneExpandToCurrentFolder" /t REG_DWORD /d 1
-:: Navigation pane: Show all folders
+echo -%ESC%[32m Navigation pane: Show all folders %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "NavPaneShowAllFolders" /t REG_DWORD /d 1
 
-:: Change Visual Effects Settings for Best Performance and best looking
+echo -%ESC%[32m Change Visual Effects Settings for Best Performance and best looking %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" /f /v "VisualFXSetting" /t REG_DWORD /d 3
-:: Animate controls and elements inside windows - off
+echo -%ESC%[32m Animate controls and elements inside windows - off %ESC%[0m
 reg add "HKCU\Control Panel\Desktop" /f /v "UserPreferencesMask" /t REG_BINARY /d "9032078090000000"
-:: Animate windows when minimizing and maximizing - off
+echo -%ESC%[32m Animate windows when minimizing and maximizing - off %ESC%[0m
 reg add "HKCU\Control Panel\Desktop\WindowMetrics" /f /v "MinAnimate" /d 0
-:: Animations in the taskbar - off
+echo -%ESC%[32m Animations in the taskbar - off %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "TaskbarAnimations" /t REG_DWORD /d 0
-:: Enable Peek - off: Created by: Shawn Brink; Created on: April 14th 2016; Updated on: May 23rd 2019; Tutorial: https://www.tenforums.com/tutorials/47266-turn-off-peek-desktop-windows-10-a.html
+echo -%ESC%[32m Enable Peek - off: Created by: Shawn Brink; Created on: April 14th 2016; Updated on: May 23rd 2019; Tutorial: %ESC%[36m https://www.tenforums.com/tutorials/47266-turn-off-peek-desktop-windows-10-a.html %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\DWM" /f /v "EnableAeroPeek" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v DisablePreviewDesktop /t REG_DWORD /d 1
-:: Fade or slide menus into view - off
+echo -%ESC%[32m Fade or slide menus into view - off %ESC%[0m
 reg add "HKCU\Control Panel\Desktop" /f /v "UserPreferencesMask" /t REG_BINARY /d "9032078090000000"
-:: Fade or slide ToolTips into view - off
+echo -%ESC%[32m Fade or slide ToolTips into view - off %ESC%[0m
 reg add "HKCU\Control Panel\Desktop" /f /v "UserPreferencesMask" /t REG_BINARY /d "9032078090000000"
-:: Fade out menu items after clicking - off
+echo -%ESC%[32m Fade out menu items after clicking - off %ESC%[0m
 reg add "HKCU\Control Panel\Desktop" /f /v "UserPreferencesMask" /t REG_BINARY /d "9032078090000000"
-:: Save taskbar thumbnail previews - off
+echo -%ESC%[32m Save taskbar thumbnail previews - off %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\DWM" /f /v "AlwaysHibernateThumbnails" /t REG_DWORD /d 0
-:: Show shadows under mouse pointer
+echo -%ESC%[32m Show shadows under mouse pointer %ESC%[0m
 reg add "HKCU\Control Panel\Desktop" /f /v "UserPreferencesMask" /t REG_BINARY /d "9032078090000000"
-:: Show shadows under windows
+echo -%ESC%[32m Show shadows under windows %ESC%[0m
 reg add "HKCU\Control Panel\Desktop" /f /v "UserPreferencesMask" /t REG_BINARY /d "9032078090000000"
-:: Show thumbnails instead of icons
+echo -%ESC%[32m Show thumbnails instead of icons %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "IconsOnly" /t REG_DWORD /d 0
-:: Show translucent selection rectangle - off
+echo -%ESC%[32m Show translucent selection rectangle - off %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "ListviewAlphaSelect" /t REG_DWORD /d 0
-:: Show window contents while dragging - off
+echo -%ESC%[32m Show window contents while dragging - off %ESC%[0m
 reg add "HKCU\Control Panel\Desktop" /f /v "DragFullWindows" /d 0
-:: Slide open combo boxes - off
+echo -%ESC%[32m Slide open combo boxes - off %ESC%[0m
 reg add "HKCU\Control Panel\Desktop" /f /v "UserPreferencesMask" /t REG_BINARY /d "9032078090000000"
-:: Smooth edges of screen fonts
+echo -%ESC%[32m Smooth edges of screen fonts %ESC%[0m
 reg add "HKCU\Control Panel\Desktop" /f /v "FontSmoothing" /t REG_SZ /d "2"
-:: Smooth-scrool list boxes - off
+echo -%ESC%[32m Smooth-scrool list boxes - off %ESC%[0m
 reg add "HKCU\Control Panel\Desktop" /f /v "UserPreferencesMask" /t REG_BINARY /d "9032078090000000"
-:: Use drop shadows for icon labels on the desktop
+echo -%ESC%[32m Use drop shadows for icon labels on the desktop %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "ListviewShadow" /t REG_DWORD /d 0
-:: Move the Start button to the Left Corner:
+echo -%ESC%[32m Move the Start button to the Left Corner: %ESC%[0m
 taskkill /f /im explorer.exe
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v TaskbarAl /t REG_DWORD /d 0
 start explorer.exe
 
-:: Disable Remote Assistance: Created by: Shawn Brink on: August 27th 2018:: Tutorial: https://www.tenforums.com/tutorials/116749-enable-disable-remote-assistance-connections-windows.html
+echo -%ESC%[32m Disable Remote Assistance: Created by: Shawn Brink on: August 27th 2018echo -%ESC%[32m Tutorial: %ESC%[36m https://www.tenforums.com/tutorials/116749-enable-disable-remote-assistance-connections-windows.html %ESC%[0m
 reg add "HKLM\System\CurrentControlSet\Control\Remote Assistance" /f /v fAllowToGetHelp /t REG_DWORD /d 0
 netsh advfirewall firewall set rule group="Remote Assistance" new enable=no
 
-:: Change to Small memory dump: Memory dump file options for Windows: https://support.microsoft.com/en-us/topic/b863c80e-fb51-7bd5-c9b0-6116c3ca920f
+echo -%ESC%[32m Change to Small memory dump: Memory dump file options for Windows: %ESC%[36m https://support.microsoft.com/en-us/topic/b863c80e-fb51-7bd5-c9b0-6116c3ca920f %ESC%[0m
 reg add "HKLM\System\CurrentControlSet\Control\CrashControl" /f /v "CrashDumpEnabled" /d "0x3"
 
-:: Clear Taskbar Pinned Apps: Created by: Shawn Brink on: December 3rd 2014: Tutorial: https://www.tenforums.com/tutorials/3151-reset-clear-taskbar-pinned-apps-windows-10-a.html
+echo -%ESC%[32m Clear Taskbar Pinned Apps: Created by: Shawn Brink on: December 3rd 2014: Tutorial: %ESC%[36m https://www.tenforums.com/tutorials/3151-reset-clear-taskbar-pinned-apps-windows-10-a.html %ESC%[0m
 move "%AppData%\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\*.*" "%AppData%\Microsoft\Internet Explorer\Quick Launch\User Pinned"
 DEL /F /S /Q /A "%AppData%\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\*"
 :: reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Taskband" /F
 move "%AppData%\Microsoft\Internet Explorer\Quick Launch\User Pinned\*.*" "%AppData%\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar"
 
-:: "Restore Windows Photo Viewer" Created by: Shawn Brink; Created on: August 8th 2015; Updated on: August 5th 2018 #  Tutorial: https://www.tenforums.com/tutorials/14312-restore-windows-photo-viewer-windows-10-a.html
+echo %ESC%[35m "Restore Windows Photo Viewer" Created by: Shawn Brink; Created on: August 8th 2015; Updated on: August 5th 2018 # Tutorial: %ESC%[36m https://www.tenforums.com/tutorials/14312-restore-windows-photo-viewer-windows-10-a.html %ESC%[0m
 reg add "HKCR\jpegfile\shell\open\DropTarget" /f /v "Clsid" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}"
 reg add "HKCR\pngfile\shell\open\DropTarget" /f /v "Clsid" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}"
 reg add "HKCR\Applications\photoviewer.dll\shell\open" /f /v "MuiVerb" /t REG_SZ /d "@photoviewer.dll,-3043"
@@ -716,7 +778,7 @@ reg add "HKLM\Software\Microsoft\Windows Photo Viewer\Capabilities\FileAssociati
 reg add "HKLM\Software\Microsoft\Windows Photo Viewer\Capabilities\FileAssociations" /f /v ".tif" /t REG_SZ /d "PhotoViewer.FileAssoc.Tiff"
 reg add "HKLM\Software\Microsoft\Windows Photo Viewer\Capabilities\FileAssociations" /f /v ".tiff" /t REG_SZ /d "PhotoViewer.FileAssoc.Tiff"
 
-:: Remove sounds - "Change to no sounds theme"
+echo %ESC%[35m Remove sounds - "Change to no sounds theme" %ESC%[0m
 reg add "HKCU\AppEvents\Schemes" /f /ve /t REG_SZ /d ".None"
 reg add "HKCU\AppEvents\Schemes\Apps\.Default\.Default\.Current" /f /ve /t REG_SZ /d ""
 reg add "HKCU\AppEvents\Schemes\Apps\.Default\AppGPFault\.Current" /f /ve /t REG_SZ /d ""
@@ -773,7 +835,7 @@ reg add "HKCU\AppEvents\Schemes\Apps\sapisvr\HubSleepSound\.current" /f /ve /t R
 reg add "HKCU\AppEvents\Schemes\Apps\sapisvr\MisrecoSound\.current" /f /ve /t REG_SZ /d ""
 reg add "HKCU\AppEvents\Schemes\Apps\sapisvr\PanelSound\.current" /f /ve /t REG_SZ /d ""
 
-:: Remove Xbox...
+echo -%ESC%[32m Remove Xbox... %ESC%[0m
 sc stop XblAuthManager
 sc delete XblAuthManager
 sc stop XblGameSave
@@ -786,7 +848,7 @@ reg delete "HKLM\System\CurrentControlSet\Services\xbgm" /f
 schtasks /Change /TN "Microsoft\XblGameSave\XblGameSaveTask" /disable
 schtasks /Change /TN "Microsoft\XblGameSave\XblGameSaveTaskLogon" /disable
 
-:: Remove Maps...
+echo -%ESC%[32m Remove Maps... %ESC%[0m
 sc stop "MapsBroker"
 sc config "MapsBroker" start=disabled
 sc delete MapsBroker
@@ -794,111 +856,110 @@ sc stop lfsvc
 sc delete lfsvc
 schtasks /Change /TN "\Microsoft\Windows\Maps\MapsUpdateTask" /disable
 
-:: Disables scheduled tasks that are considered unnecessary
-schtasks /query /v /fo CSV > tasks.csv
-:: EDP Policy Manager - This task performs steps necessary to configure Windows Information Protection.
-schtasks /Change /TN "\Microsoft\Windows\AppID\EDP Policy Manager" /disable
-:: Inspects the AppID certificate cache for invalid or revoked certificates.
+echo %ESC%[35m Disables scheduled tasks that are considered unnecessary %ESC%[0m
+schtasks /query /v /fo CSV > "%UserProfile%\Documents\Settings\tasks.csv"​
+echo -%ESC%[32m EDP Policy Manager - This task performs steps necessary to configure Windows Information Protection. %ESC%[0m
+schtasks /Change /TN "\Microsoft\Windows\AppID\EDP Policy Manager" /disable :: Inspects the AppID certificate cache for invalid or revoked certificates.
 :: schtasks /Change /TN "\Microsoft\Windows\AppID\VerifiedPublisherCertStoreCheck" /disable
-?schtasks /Change /TN "\Microsoft\Windows\SmartScreenSpecific*" /disable
-?schtasks /Change /TN "\Microsoft\Windows\AitAgent*" /disable
-?schtasks /Change /TN "\Microsoft\Windows\Microsoft*" /disable
-:: PcaPatchDbTask - Updates compatibility database
+:: ?schtasks /Change /TN "\Microsoft\Windows\SmartScreenSpecific*" /disable
+:: ?schtasks /Change /TN "\Microsoft\Windows\AitAgent*" /disable
+:: ?schtasks /Change /TN "\Microsoft\Windows\Microsoft*" /disable
+echo -%ESC%[32m PcaPatchDbTask - Updates compatibility database %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Application Experience\PcaPatchDbTask" /disable
 schtasks /Change /TN "\Microsoft\Windows\Application Experience\ProgramDataUpdater" /disable
-:: StartupAppTask - Scans startup entries and raises notification to the user if there are too many startup entries.
+echo -%ESC%[32m StartupAppTask - Scans startup entries and raises notification to the user if there are too many startup entries. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Application Experience\StartupAppTask" /disable
-:: MareBackup - Gathers Win32 application data for App Backup scenario
+echo -%ESC%[32m MareBackup - Gathers Win32 application data for App Backup scenario %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Application Experience\MareBackup" /disable
-:: Cleans up each package's unused temporary files.
+echo -%ESC%[32m Cleans up each package's unused temporary files. %ESC%[0m
 rem schtasks /Change /TN "\Microsoft\Windows\ApplicationData\CleanupTemporaryState" /disable
-:: Performs maintenance for the Data Sharing Service.
+echo -%ESC%[32m Performs maintenance for the Data Sharing Service.
 schtasks /Change /TN "\Microsoft\Windows\ApplicationData\DsSvcCleanup" /disable
-:: This task collects and uploads autochk SQM data if opted-in to the Microsoft Customer Experience Improvement Program.
+echo -%ESC%[32m This task collects and uploads autochk SQM data if opted-in to the Microsoft Customer Experience Improvement Program. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Autochk\Proxy" /disable
-?schtasks /Change /TN "\Microsoft\Windows\BthSQM*" /disable
-:: License Validation - Windows Store legacy license migration task
+:: ?schtasks /Change /TN "\Microsoft\Windows\BthSQM*" /disable
+echo -%ESC%[32m License Validation - Windows Store legacy license migration task %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Clip\License Validation" /disable
 schtasks /Change /TN "\Microsoft\Windows\CloudExperienceHost\CreateObjectTask" /disable
-:: Consolidator - If the user has consented to participate in the Windows Customer Experience Improvement Program, this job collects and sends usage data to Microsoft.
+echo -%ESC%[32m Consolidator - If the user has consented to participate in the Windows Customer Experience Improvement Program, this job collects and sends usage data to Microsoft. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Customer Experience Improvement Program\Consolidator" /disable
-:: The USB CEIP (Customer Experience Improvement Program) task collects Universal Serial Bus related statistics and information about your machine and sends it to the Windows Device Connectivity engineering group at Microsoft.  The information received is used to help improve the reliability, stability, and overall functionality of USB in Windows.  If the user has not consented to participate in Windows CEIP, this task does not do anything.
+echo -%ESC%[32m The USB CEIP (Customer Experience Improvement Program) task collects Universal Serial Bus related statistics and information about your machine and sends it to the Windows Device Connectivity engineering group at Microsoft. The information received is used to help improve the reliability, stability, and overall functionality of USB in Windows. If the user has not consented to participate in Windows CEIP, this task does not do anything. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip" /disable
 ?schtasks /Change /TN "\Microsoft\Windows\KernelCeipTask*" /disable
 ?schtasks /Change /TN "\Microsoft\Windows\Uploader*" /disable
-:: Microsoft-Windows-DiskDiagnosticDataCollector - The Windows Disk Diagnostic reports general disk and system information to Microsoft for users participating in the Customer Experience Program.
+echo -%ESC%[32m Microsoft-Windows-DiskDiagnosticDataCollector - The Windows Disk Diagnostic reports general disk and system information to Microsoft for users participating in the Customer Experience Program. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector" /disable
-:: schtasks /Change /TN "\Microsoft\Windows\DiskFootprint\Diagnostics" /disable
+echo -%ESC%[32m schtasks /Change /TN "\Microsoft\Windows\DiskFootprint\Diagnostics" /disable
 schtasks /Change /TN "\Microsoft\Windows\Feedback\Siuf\DmClient" /disable
 schtasks /Change /TN "\Microsoft\Windows\Feedback\Siuf\DmClientOnScenarioDownload" /disable
-:: Property Definition Sync - Synchronizes the File Classification Infrastructure taxonomy on the computer with the resource property definitions stored in Active Directory Domain Services.
+echo -%ESC%[32m Property Definition Sync - Synchronizes the File Classification Infrastructure taxonomy on the computer with the resource property definitions stored in Active Directory Domain Services. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\File Classification Infrastructure\Property Definition Sync" /disable
-:: TempSignedLicenseExchange - Exchanges temporary preinstalled licenses for Windows Store licenses.
+:: TempSignedLicenseExchange - Exchanges temporary preinstalled licenses for Windows Store licenses. %ESC%[0m
 rem schtasks /Change /TN "\Microsoft\Windows\License Manager\TempSignedLicenseExchange" /disable
-:: Location Notification
+echo -%ESC%[32m Location Notification %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Location\Notifications" /disable
 schtasks /Change /TN "\Microsoft\Windows\Location\WindowsActionDialog" /disable
-:: Measures a system's performance and capabilities
+echo -%ESC%[32m Measures a system's performance and capabilities %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Maintenance\WinSAT" /disable
 schtasks /Change /TN "\Microsoft\Windows\Management\Provisioning\Cellular" /disable
-:: This task shows various Map related toasts
+echo -%ESC%[32m This task shows various Map related toasts %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Maps\MapsToastTask" /disable
-:: This task checks for updates to maps which you have downloaded for offline use. Disabling this task will prevent Windows from notifying you of updated maps.
+echo -%ESC%[32m This task checks for updates to maps which you have downloaded for offline use. Disabling this task will prevent Windows from notifying you of updated maps. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Maps\MapsUpdateTask" /disable
-:: Schedules a memory diagnostic in response to system events.
+:: Schedules a memory diagnostic in response to system events. %ESC%[0m
 :: System Sounds User Mode Agent
 schtasks /Change /TN "\Microsoft\Windows\Multimedia\SystemSoundsService" /disable
-:: This task gathers information about the Trusted Platform Module (TPM), Secure Boot, and Measured Boot.
+echo -%ESC%[32m This task gathers information about the Trusted Platform Module (TPM), Secure Boot, and Measured Boot. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\PI\Sqm-Tasks" /disable
-:: This task analyzes the system looking for conditions that may cause high energy use.
+echo -%ESC%[32m This task analyzes the system looking for conditions that may cause high energy use. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Power Efficiency Diagnostics\AnalyzeSystem" /disable
-:: This service manages Apps that are pushed to the device from the Microsoft Store App running on other devices or the web.
+echo -%ESC%[32m This service manages Apps that are pushed to the device from the Microsoft Store App running on other devices or the web. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\PushToInstall\Registration" /disable
-:: Checks group policy for changes relevant to Remote Assistance
+echo -%ESC%[32m Checks group policy for changes relevant to Remote Assistance %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\RemoteAssistance\RemoteAssistanceTask" /disable
 schtasks /Change /TN "\Microsoft\Windows\SettingSync\BackgroundUploadTask" /disable
 schtasks /Change /TN "\Microsoft\Windows\SettingSync\NetworkStateChangeTask" /disable
 :: 
 ?schtasks /Change /TN "\Microsoft\Windows\BackupTask*" /disable
-:: Initializes Family Safety monitoring and enforcement.
+echo -%ESC%[32m Initializes Family Safety monitoring and enforcement. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Shell\FamilySafetyMonitor" /disable
-:: Synchronizes the latest settings with the Microsoft family features service.
+echo -%ESC%[32m Synchronizes the latest settings with the Microsoft family features service. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Shell\FamilySafetyRefreshTask" /disable
-:: Downloads a backup of your synced theme images
+echo -%ESC%[32m Downloads a backup of your synced theme images %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Shell\ThemesSyncedImageDownload" /disable
 schtasks /Change /TN "\Microsoft\Windows\Shell\UpdateUserPictureTask" /disable
-:: Keeps the search index up to date
+echo -%ESC%[32m Keeps the search index up to date %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Shell\IndexerAutomaticMaintenance" /disable
 schtasks /Change /TN "\Microsoft\Windows\Speech\SpeechModelDownloadTask" /disable
-:: Enable susbscription license acquisition
+echo -%ESC%[32m Enable susbscription license acquisition %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Subscription\EnableLicenseAcquisition" /disable
-:: Susbscription license acquisition
+echo -%ESC%[32m Susbscription license acquisition %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Subscription\LicenseAcquisition" /disable
-:: Windows Error Reporting task to process queued reports.
+echo -%ESC%[32m Windows Error Reporting task to process queued reports. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Windows Error Reporting\QueueReporting" /disable
-:: Register this computer if the computer is already joined to an Active Directory domain.
+echo -%ESC%[32m Register this computer if the computer is already joined to an Active Directory domain. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Workplace Join\Automatic-Device-Join" /disable
-:: Sync device attributes to Azure Active Directory.
+echo -%ESC%[32m Sync device attributes to Azure Active Directory. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Workplace Join\Device-Sync" /disable
-:: Performs recovery check.
+echo -%ESC%[32m Performs recovery check. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\Workplace Join\Recovery-Check" /disable
-:: This task will automatically upload a roaming user profile's registry hive to its network location.
+echo -%ESC%[32m This task will automatically upload a roaming user profile's registry hive to its network location. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\User Profile Service\HiveUploadTask" /disable
 
 
-:: Removing Telemetry and other unnecessary services:
-:: Connected User Experience and Telemetry component, also known as the Universal Telemetry Client (UTC)...
+echo %ESC%[35m Removing Telemetry and other unnecessary services: %ESC%[0m
+echo -%ESC%[32m Connected User Experience and Telemetry component, also known as the Universal Telemetry Client (UTC)... %ESC%[0m
 sc stop DiagTrack
 sc delete DiagTrack
-:: WAP Push Message Routing Service... Device Management Wireless Application Protocol (WAP) Push message Routing Service — This service is another service that helps to collect and send user data to Microsoft.
+echo -%ESC%[32m WAP Push Message Routing Service... Device Management Wireless Application Protocol (WAP) Push message Routing Service — This service is another service that helps to collect and send user data to Microsoft. %ESC%[0m
 sc stop dmwappushservice
 sc delete dmwappushservice
-:: Windows Error Reporting Service Description: Allows errors to be reported when programs stop working or responding ...
+echo -%ESC%[32m Windows Error Reporting Service Description: Allows errors to be reported when programs stop working or responding ... %ESC%[0m
 sc stop WerSvc
 sc delete WerSvc
-:: Synchronize mail, contacts, calendar and various other user data...
+echo -%ESC%[32m Synchronize mail, contacts, calendar and various other user data... %ESC%[0m
 sc stop OneSyncSvc
-:: Preventing Windows from re-enabling Telemetry services...
+echo -%ESC%[32m Preventing Windows from re-enabling Telemetry services... %ESC%[0m
 reg add "HKLM\System\CurrentControlSet\Services\DiagTrack" /f /v "Start" /t REG_DWORD /d 4
 reg add "HKLM\System\CurrentControlSet\Services\DiagTrack" /f /v "Type" /t REG_DWORD /d 10
 reg add "HKLM\System\CurrentControlSet\Services\DiagTrack" /f /v "ServiceSidType" /t REG_DWORD /d 1
@@ -909,11 +970,11 @@ reg add "HKLM\System\CurrentControlSet\Services\dmwappushservice" /f /v "Type" /
 reg add "HKLM\System\CurrentControlSet\Services\dmwappushservice" /f /v "ServiceSidType" /t REG_DWORD /d 1
 reg add "HKLM\System\CurrentControlSet\Services\dmwappushservice\Parameters" /f /v "ServiceDllUnloadOnStop" /t REG_DWORD /d 1
 
-:: System TuneUp
-:: Optimize prefetch parameters to improve Windows boot-up speed
+echo %ESC%[35m System TuneUp %ESC%[0m
+echo -%ESC%[32m Optimize prefetch parameters to improve Windows boot-up speed %ESC%[0m
 reg add "HKLM\System\ControlSet001\Control\Session Manager\Memory Management\PrefetchParameters" /f /v "EnablePrefetcher" /t REG_DWORD /d 2
 reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /f /v "EnablePrefetcher" /t REG_DWORD /d 2
-:: Reduce Application idlesness at closing to improve shutdown process
+echo -%ESC%[32m Reduce Application idlesness at closing to improve shutdown process %ESC%[0m
 reg delete "HKCU\Control Panel\Desktop" /f /v "LowLevelHooksTimeout"
 reg delete "HKCU\Control Panel\Desktop" /f /v "WaitToKillServiceTimeout"
 reg delete "HKCU\Control Panel\Desktop" /f /v "HungAppTimeout"
@@ -922,74 +983,74 @@ reg add "HKCU\Control Panel\Desktop" /f /v "LowLevelHooksTimeout" /t REG_SZ /d "
 reg add "HKCU\Control Panel\Desktop" /f /v "WaitToKillServiceTimeout" /t REG_SZ /d "5000"
 reg add "HKCU\Control Panel\Desktop" /f /v "HungAppTimeout" /t REG_SZ /d "3000"
 reg add "HKCU\Control Panel\Desktop" /f /v "WaitToKillAppTimeout" /t REG_SZ /d "10000"
-:: Enable optimization feature to improve Windows boot-up speed (HDD only)
+echo -%ESC%[32m Enable optimization feature to improve Windows boot-up speed (HDD only) %ESC%[0m
 reg add "HKLM\Software\Microsoft\Dfrg\BootOptimizeFunction" /f /v "Enable" /t REG_SZ /d "y"
-:: System Stability
-:: Disable automatical reboot when system encounters blue screen
+echo -%ESC%[32m System Stability %ESC%[0m
+echo -%ESC%[32m Disable automatical reboot when system encounters blue screen %ESC%[0m
 reg add "HKLM\System\ControlSet001\Control\CrashControl" /f /v "AutoReboot" /t REG_DWORD /d 0
 reg add "HKLM\System\CurrentControlSet\Control\CrashControl" /f /v "AutoReboot" /t REG_DWORD /d 0
-:: Disable registry modification from a remote computer
+echo -%ESC%[32m Disable registry modification from a remote computer %ESC%[0m
 reg add "HKLM\System\ControlSet001\Control\SecurePipeServers\winreg" /f /v "remoteregaccess" /t REG_DWORD /d 1
 reg add "HKLM\System\CurrentControlSet\Control\SecurePipeServers\winreg" /f /v "remoteregaccess" /t REG_DWORD /d 1
-:: Set Windows Explorer components to run in separate processes avoiding system conflicts
+echo -%ESC%[32m Set Windows Explorer components to run in separate processes avoiding system conflicts %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer" /f /v "DesktopProcess" /t REG_DWORD /d 1
-:: Close frozen processes to avoid system crashes
+echo -%ESC%[32m Close frozen processes to avoid system crashes %ESC%[0m
 reg add "HKCU\Control Panel\Desktop" /f /v "AutoEndTasks" /t REG_SZ /d "1"
-:: System Speedup
-:: Remove the word "shortcut" from the shortcut icons
+echo %ESC%[35m System Speedup %ESC%[0m
+echo -%ESC%[32m Remove the word "shortcut" from the shortcut icons %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer" /f /v "link" /t REG_BINARY /d "00000000"
-:: Optimize Windows Explorer so that it can automatically restart after an exception occurs to prevent the system from being unresponsive.
+echo -%ESC%[32m Optimize Windows Explorer so that it can automatically restart after an exception occurs to prevent the system from being unresponsive. %ESC%[0m
 
-:: Optimize the visual effect of the menu and list to improve the operating speed of the system.
+echo -%ESC%[32m Optimize the visual effect of the menu and list to improve the operating speed of the system. %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "ListviewAlphaSelect" /t REG_DWORD /d 0
-:: Optimize refresh policy of Windows file list - DFS Share Refresh Issue - https://wiki.ledhed.net/index.php/DFS_Share_Refresh_Issue
+echo -%ESC%[32m Optimize refresh policy of Windows file list - DFS Share Refresh Issue -%ESC%[36m https://wiki.ledhed.net/index.php/DFS_Share_Refresh_Issue %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "NoSimpleNetIDList" /t REG_DWORD /d 1
-:: Speed up display speed of Taskbar Window Previews.
+echo -%ESC%[32m Speed up display speed of Taskbar Window Previews. %ESC%[0m
 reg add "HKCU\Control Panel\Mouse" /f /v "MouseHoverTime" /t REG_SZ /d "100"
-:: Speed up Aero Snap to make thumbnail display faster.
+echo -%ESC%[32m Speed up Aero Snap to make thumbnail display faster. %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "ExtendedUIHoverTime" /t REG_DWORD /d "0"
-:: Optimized response speed of system display.
+echo -%ESC%[32m Optimized response speed of system display. %ESC%[0m
 reg add "HKCU\Control Panel\Desktop" /f /v "MenuShowDelay" /t REG_SZ /d 0
-:: Increase system icon cache and speed up desktop display.
+echo -%ESC%[32m Increase system icon cache and speed up desktop display. %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer" /f /v "Max Cached Icons" /t REG_SZ /d 4096
-:: Boost the response speed of foreground programs.
+echo -%ESC%[32m Boost the response speed of foreground programs. %ESC%[0m
 reg add "HKCU\Control Panel\Desktop" /f /v "ForegroundLockTimeout" /t REG_DWORD /d 0
-:: Boost the display speed of Aero Peek.
+echo -%ESC%[32m Boost the display speed of Aero Peek. %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "DesktopLivePreviewHoverTime" /t REG_DWORD /d 0
-:: Disable memory pagination and reduce disk 1/0 to improve application performance. {Option may be ignored if physical memory is <1 GB)
+echo -%ESC%[32m Disable memory pagination and reduce disk 1/0 to improve application performance. {Option may be ignored if physical memory is <1 GB) %ESC%[0m
 reg add "HKLM\System\ControlSet001\Control\Session Manager\Memory Management" /f /v "DisablePagingExecutive" /t REG_DWORD /d 1
 reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management" /f /v "DisablePagingExecutive" /t REG_DWORD /d 1
-:: Optimize processor performance for execution of applications, games, etc. {Ignore if server}
+echo -%ESC%[32m Optimize processor performance for execution of applications, games, etc. {Ignore if server} %ESC%[0m
 reg add "HKLM\System\ControlSet001\Control\PriorityControl" /f /v "Win32PrioritySeparation" /t REG_DWORD /d "38"
 reg add "HKLM\System\CurrentControlSet\Control\PriorityControl" /f /v "Win32PrioritySeparation" /t REG_DWORD /d "38"
-:: Close animation effect when maximizing or minimizing a window to speed up the window response.
+echo -%ESC%[32m Close animation effect when maximizing or minimizing a window to speed up the window response. %ESC%[0m
 reg add "HKCU\Control Panel\Desktop\WindowMetrics" /f /v "MinAnimate" /t REG_SZ /d "0"
-:: Optimize disk I/O while CPU is idle (HDD only)
+echo -%ESC%[32m Optimize disk I/O while CPU is idle (HDD only) %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\OptimalLayout" /f /v "EnableAutoLayout" /t REG_DWORD /d "1"
-:: Disable the "Autoplay" feature on drives to avoid virus infection/propagation.
+echo -%ESC%[32m Disable the "Autoplay" feature on drives to avoid virus infection/propagation. %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" /f /v "NoDriveTypeAutoRun" /t REG_DWORD /d "221"
-:: Optimize disk 1/0 subsystem to improve system performance.
+echo -%ESC%[32m Optimize disk 1/0 subsystem to improve system performance. %ESC%[0m
 reg add "HKLM\System\ControlSet001\Control\Session Manager" /f /v "AutoChkTimeout" /t REG_DWORD /d 5
 reg add "HKLM\System\CurrentControlSet\Control\Session Manager" /f /v "AutoChkTimeout" /t REG_DWORD /d 5
-:: Optimize the file system to improve system performance.
+echo -%ESC%[32m Optimize the file system to improve system performance. %ESC%[0m
 reg delete "HKLM\System\ControlSet001\Control\FileSystem" /f /v "NtfsDisableLastAccessUpdate"
 reg delete "HKLM\System\CurrentControlSet\Control\FileSystem" /f /v "NtfsDisableLastAccessUpdate"
 reg add "HKLM\System\ControlSet001\Control\FileSystem" /f /v "NtfsDisableLastAccessUpdate" /t REG_DWORD /d 2147483649
 reg add "HKLM\System\CurrentControlSet\Control\FileSystem" /f /v "NtfsDisableLastAccessUpdate" /t REG_DWORD /d 2147483649
-:: Optimize front end components (dialog box, menus, etc.) appearance to improve system performance.
+echo -%ESC%[32m Optimize front end components (dialog box, menus, etc.) appearance to improve system performance. %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "TaskbarAnimations" /t REG_DWORD /d 0
-:: Optimize memory default settings to improve system performance.
+echo -%ESC%[32m Optimize memory default settings to improve system performance. %ESC%[0m
 reg add "HKLM\System\ControlSet001\Control\Session Manager\Memory Management" /f /v "IoPageLockLimit" /t REG_DWORD /d "134217728"
 reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management" /f /v "IoPageLockLimit" /t REG_DWORD /d "134217728"
-:: Disable the debugger to speed up error processing.
+echo -%ESC%[32m Disable the debugger to speed up error processing. %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\AeDebug" /f /v "Auto" /t REG_SZ /d 0
-:: Disable screen error reporting to improve system performance.
+echo -%ESC%[32m Disable screen error reporting to improve system performance. %ESC%[0m
 reg add "HKLM\Software\Microsoft\PCHealth\ErrorReporting" /f /v "ShowUI" /t REG_DWORD /d 0
 reg add "HKLM\Software\Microsoft\PCHealth\ErrorReporting" /f /v "DoReport" /t REG_DWORD /d 0
-:: Network Speedup
-:: Optimize LAN connection.
+echo %ESC%[35m Network Speedup %ESC%[0m
+echo -%ESC%[32m Optimize LAN connection. %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v "nonetcrawling" /t REG_DWORD /d 1
-:: Optimize DNS and DNS parsing speed.
+echo -%ESC%[32m Optimize DNS and DNS parsing speed. %ESC%[0m
 reg add "HKLM\System\ControlSet001\Services\Dnscache\Parameters" /f /v "maxnegativecachettl" /t REG_DWORD /d 0
 reg add "HKLM\System\ControlSet001\Services\Dnscache\Parameters" /f /v "maxcachettl" /t REG_DWORD /d "10800"
 reg add "HKLM\System\ControlSet001\Services\Dnscache\Parameters" /f /v "maxcacheentryttllimit" /t REG_DWORD /d "10800"
@@ -1000,10 +1061,10 @@ reg add "HKLM\System\CurrentControlSet\Services\Dnscache\Parameters" /f /v "maxc
 reg add "HKLM\System\CurrentControlSet\Services\Dnscache\Parameters" /f /v "maxcacheentryttllimit" /t REG_DWORD /d "10800"
 reg add "HKLM\System\CurrentControlSet\Services\Dnscache\Parameters" /f /v "netfailurecachetime" /t REG_DWORD /d "0"
 reg add "HKLM\System\CurrentControlSet\Services\Dnscache\Parameters" /f /v "negativesoacachetime" /t REG_DWORD /d "0"
-:: Optimize Ethernet card performance.
+echo -%ESC%[32m Optimize Ethernet card performance. %ESC%[0m
 reg add "HKLM\System\ControlSet001\Services\Tcpip\Parameters" /f /v "MaxConnectionsPerServer" /t REG_DWORD /d 0
 reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /f /v "MaxConnectionsPerServer" /t REG_DWORD /d 0
-:: Optimize network forward ability to improve network performance.
+echo -%ESC%[32m Optimize network forward ability to improve network performance. %ESC%[0m
 reg add "HKLM\System\ControlSet001\Control\Nsi\{eb004a03-9b1a-11d4-9123-0050047759bc}\0" /f /v "0200" /t REG_BINARY /d "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff"
 reg add "HKLM\System\ControlSet001\Services\Tcpip\Parameters" /f /v "Tcp1323Opts" /t REG_DWORD /d "1"
 reg add "HKLM\System\ControlSet001\Services\Tcpip\Parameters" /f /v "SackOpts" /t REG_DWORD /d "1"
@@ -1012,49 +1073,55 @@ reg add "HKLM\System\CurrentControlSet\Control\Nsi\{eb004a03-9b1a-11d4-9123-0050
 reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /f /v "Tcp1323Opts" /t REG_DWORD /d "1"
 reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /f /v "SackOpts" /t REG_DWORD /d "1"
 reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /f /v "TcpMaxDupAcks" /t REG_DWORD /d "2"
-:: Optimize network settings to improve communication performance.
+echo -%ESC%[32m Optimize network settings to improve communication performance. %ESC%[0m
 reg add "HKLM\System\ControlSet001\Services\LanmanWorkstation\Parameters" /f /v "MaxCollectionCount" /t REG_DWORD /d "32"
 reg add "HKLM\System\ControlSet001\Services\LanmanWorkstation\Parameters" /f /v "MaxThreads" /t REG_DWORD /d "30"
 reg add "HKLM\System\ControlSet001\Services\LanmanWorkstation\Parameters" /f /v "MaxCmds" /t REG_DWORD /d "30"
 reg add "HKLM\System\CurrentControlSet\Services\LanmanWorkstation\Parameters" /f /v "MaxCollectionCount" /t REG_DWORD /d "32"
 reg add "HKLM\System\CurrentControlSet\Services\LanmanWorkstation\Parameters" /f /v "MaxThreads" /t REG_DWORD /d "30"
 reg add "HKLM\System\CurrentControlSet\Services\LanmanWorkstation\Parameters" /f /v "MaxCmds" /t REG_DWORD /d "30"
-:: Optimize WINS name query time to improve data transfer speed.
+echo -%ESC%[32m Optimize WINS name query time to improve data transfer speed. %ESC%[0m
 reg add "HKLM\System\ControlSet001\Services\Tcpip\Parameters" /v "NameSrvQueryTimeout" /f /t REG_DWORD /d "3000"
 reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /v "NameSrvQueryTimeout" /f /t REG_DWORD /d "3000"
-:: Improve TCP/IP performance through automatic detection of "black holes" in routing at Path MTU Discovery technique.
+echo -%ESC%[32m Improve TCP/IP performance through automatic detection of "black holes" in routing at Path MTU Discovery technique. %ESC%[0m
 reg add "HKLM\System\ControlSet001\Services\Tcpip\Parameters" /v "EnablePMTUDiscovery" /f /t REG_DWORD /d "1"
 reg add "HKLM\System\ControlSet001\Services\Tcpip\Parameters" /v "EnablePMTUBHDetect" /f /t REG_DWORD /d "1"
 reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /v "EnablePMTUDiscovery" /f /t REG_DWORD /d "1"
 reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /v "EnablePMTUBHDetect" /f /t REG_DWORD /d "1"
 reg add "HKLM\System\ControlSet001\Control\Nsi\{eb004a03-9b1a-11d4-9123-0050047759bc}\0" /f /v "0200" /t REG_BINARY /d "010000010000000000000000000000000000000000000000000000000000ff0000ff00000000000000000000000000000000000000000000000000ff"
 reg add "HKLM\System\CurrentControlSet\Control\Nsi\{eb004a03-9b1a-11d4-9123-0050047759bc}\0" /f /v "0200" /t REG_BINARY /d "010000010000000000000000000000000000000000000000000000000000ff0000ff00000000000000000000000000000000000000000000000000ff"
-:: Optimize TTL {Time To Live) settings to improve network performance.
+echo -%ESC%[32m Optimize TTL {Time To Live) settings to improve network performance. %ESC%[0m
 reg add "HKLM\System\ControlSet001\Services\Tcpip\Parameters" /f /v "DefaultTTL" /t REG_DWORD /d "64"
 reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /f /v "DefaultTTL" /t REG_DWORD /d "64"
 reg add "HKLM\System\ControlSet001\Control\Nsi\{eb004a00-9b1a-11d4-9123-0050047759bc}\6" /f /ve /t REG_BINARY /d "000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffffffff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff"
 reg add "HKLM\System\CurrentControlSet\Control\Nsi\{eb004a00-9b1a-11d4-9123-0050047759bc}\6" /f /ve /t REG_BINARY /d "000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffffffff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff"
-:: SSD optimize
-:: Disable drive defrag system on boot to extend lifespan of SSD.
+echo %ESC%[35m SSD optimize %ESC%[0m
+echo -%ESC%[32m Disable drive defrag system on boot to extend lifespan of SSD. %ESC%[0m
 reg add "HKLM\Software\Microsoft\Dfrg\BootOptimizeFunction" /f /v "Enable" /t REG_SZ /d "n"
-:: Disable auto defrag when idle to extend lifespan of SSD.
+echo -%ESC%[32m Disable auto defrag when idle to extend lifespan of SSD. %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\OptimalLayout" /f /v "EnableAutoLayout" /t REG_DWORD /d "0"
-:: Disable prefetch parameters to extend lifespan of SSD.
+echo -%ESC%[32m Disable prefetch parameters to extend lifespan of SSD. %ESC%[0m
 reg add "HKLM\System\ControlSet001\Control\Session Manager\Memory Management\PrefetchParameters" /f /v "EnablePrefetcher" /t REG_DWORD /d "0"
 reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /f /v "EnablePrefetcher" /t REG_DWORD /d "0"
-:: Enable TRIM function to improve working performance of SSD.
+echo -%ESC%[32m Enable TRIM function to improve working performance of SSD. %ESC%[0m
+
+echo -%ESC%[32m Install HEVC Video Extensions %ESC%[0m
+winget install -e -i --id=9N4WGH0Z6VHQ --source=msstore
+winget install -e -i --id=9NMZLZ57R3T7 --source=msstore
 
 taskkill /f /im explorer.exe
 
 powershell.exe -ExecutionPolicy Bypass -File WinClean.ps1
 
-:: Update all installed programs
-winget upgrade --all --silent --force
+echo -%ESC%[32m Update all installed programs %ESC%[0m
+winget upgrade --all --silent --force --include-unknown
 
-:: Run Disk Cleanup - Runs Disk Cleanup on Drive C: and removes old Windows Updates.
-cleanmgr.exe /d C: /VERYLOWDISK
+echo -%ESC%[32m Run Disk Cleanup - Runs Disk Cleanup on Drive C: and removes old Windows Updates. -%ESC%[36m https://ss64.com/nt/cleanmgr.html %ESC%[0m
+cleanmgr.exe /d C: /VERYLOWDISK /Autoclean
 Dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase
 
-:: Verify System Files
+echo -%ESC%[32m Verify System Files %ESC%[0m
 sfc /scannow
-shutdown -r /t 0
+echo -%ESC%[32m PC will restart in 10 seconds unless you type: shutdown /a %ESC%[0m
+shutdown -r /t 10
+:End
