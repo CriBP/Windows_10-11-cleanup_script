@@ -5,7 +5,7 @@ Color 07
 if not "%1"=="max" start /max cmd /c %0 max & Exit /b
 :: Changed the Encoding to chcp 65001 > nul [ Unicode Encoding ]
 chcp 65001 > nul
-::Generate ANSI ESC characters for color codes
+:: Generate ANSI ESC characters for color codes
 for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set ESC=%%b
 echo %ESC%[1m- Commands sintax and utils @ %ESC%[36m https://ss64.com %ESC%[0m
 
@@ -17,7 +17,7 @@ echo -%ESC%[32m Export WiFi passwords -%ESC%[36m https://www.elevenforum.com/t/b
 netsh wlan show profiles
 netsh wlan export profile key=clear folder=%docdir%\PC-info
 echo -%ESC%[32m Check if Users are a Microsoft account or Local account -%ESC%[36m https://www.tenforums.com/tutorials/5387-how-tell-if-local-account-microsoft-account-windows-10-a.html %ESC%[0m
-powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "Get-LocalUser | Select-Object Name,PrincipalSource | Out-File -filepath "%docdir%\PC-info\All_Accounts.txt""
+powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "Get-LocalUser | Select-Object Name,PrincipalSource | Out-File -filepath %docdir%\PC-info\All_Accounts.txt"
 echo -%ESC%[92m List all Optional Capabilities - Save to -%ESC%[36m %docdir%\PC-info\Windows-Capability-listing-before-cleanup.txt %ESC%[0m
 dism /Online /Get-Capabilities /Format:Table > "%docdir%\PC-info\Windows-Capability-listing-before-cleanup.txt"
 echo -%ESC%[92m List all Optional Features - Save to -%ESC%[36m %docdir%\PC-info\Windows-Features-listing-before-cleanup.txt %ESC%[0m
@@ -36,6 +36,15 @@ systeminfo /FO CSV > %docdir%\PC-info\SystemInfo.csv
 msinfo32 /report %docdir%\PC-info\Detailed-System-Information-MSInfo32.txt
 echo -%ESC%[92m Windows Version Information - -%ESC%[36m %docdir%\PC-info\Windows-version.txt %ESC%[0m
 ver > "%docdir%\PC-info\Windows-version.txt"
+echo -%ESC%[92m Export Current Tasks to -%ESC%[36m %docdir%\PC-info\Tasks-before-cleanup.txt %ESC%[0m
+schtasks /query /v /fo CSV > "%docdir%\PC-info\Tasks-before-cleanup.txt"​
+echo -%ESC%[92m Export Windows Services to -%ESC%[36m %docdir%\PC-info\Services-before-cleanup.csv %ESC%[0m
+powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "Get-CIMInstance -Class Win32_Service | Select-Object Name, DisplayName, Description, StartMode, DelayedAutoStart, StartName, PathName, State, ProcessId | Export-CSV -Path %docdir%\PC-info\Services-before-cleanup.csv​"
+sc query state=all > %docdir%\PC-info\All-Services-before-cleanup.txt
+sc query > %docdir%\PC-info\Running-Services-before-cleanup.txt
+net start > %docdir%\PC-info\List-of-Running-Services-before-cleanup.txt
+echo -%ESC%[92m Please Backup your credentials to -%ESC%[36m %docdir%\PC-info\Credentials.crd %ESC%[0m
+Rundll32.exe keymgr.dll,KRShowKeyMgr
 
 for /f "delims=: tokens=*" %%x in ('findstr /b ::: "%~f0"') do @echo(%%x
 echo %ESC%[97m
@@ -91,7 +100,8 @@ goto Menu
 :Continue
 echo -%ESC%[32m Rename C: Drive to Windows-OS %ESC%[0m
 label C: Windows-OS
-
+:: Changed the Encoding to chcp utf-8
+chcp 1252 > nul
 echo -%ESC%[32m Set Time to UTC (Dual Boot) Essential for computers that are dual booting. Fixes the time sync with Linux Systems. %ESC%[0m
 reg add "HKLM\System\CurrentControlSet\Control\TimeZoneInformation" /f /v RealTimeIsUniversal /t REG_DWORD /d 1
 
@@ -911,7 +921,6 @@ sc delete lfsvc
 schtasks /Change /TN "\Microsoft\Windows\Maps\MapsUpdateTask" /disable
 
 echo %ESC%[35m Disables scheduled tasks that are considered unnecessary %ESC%[0m
-schtasks /query /v /fo CSV > "%docdir%\tasks.csv"​
 echo -%ESC%[32m EDP Policy Manager - This task performs steps necessary to configure Windows Information Protection. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\AppID\EDP Policy Manager" /disable :: Inspects the AppID certificate cache for invalid or revoked certificates.
 :: schtasks /Change /TN "\Microsoft\Windows\AppID\VerifiedPublisherCertStoreCheck" /disable
