@@ -1,32 +1,85 @@
 @echo off
-:: Add comments with :: or REM at beginning, if they are not in the beginning of line, then add & character: your commands here & :: comment
-:: Change window size
-rem MODE 120,80
-echo Sets the default console foreground and background colours. %ESC%[36m https://ss64.com/nt/color.html
+echo "Color" Sets the default console foreground and background colours. %ESC%[36m https://ss64.com/nt/color.html
 Color 07
-::Generate ANSI ESC char for color codes
+:: Maximize the window
+if not "%1"=="max" start /max cmd /c %0 max & Exit /b
+:: Changed the Encoding to chcp 65001 > nul [ Unicode Encoding ]
+chcp 65001 > nul
+::Generate ANSI ESC characters for color codes
 for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set ESC=%%b
 echo %ESC%[1m- Commands sintax and utils @ %ESC%[36m https://ss64.com %ESC%[0m
 
-echo -%ESC%[32m Save user information to Documents\PC-info %ESC%[0m -%ESC%[36m https://www.tenforums.com/tutorials/3443-view-user-account-details-windows-10-a.html %ESC%[0m
-md %UserProfile%\Documents\PC-info
-wmic useraccount list full >"%UserProfile%\Documents\PC-info\UserAccountDetails.txt"
+echo -%ESC%[32m Save important PC information to Documents\PC-info %ESC%[0m -%ESC%[36m https://www.tenforums.com/tutorials/3443-view-user-account-details-windows-10-a.html %ESC%[0m
+FOR /F "tokens=2* skip=2" %%a in ('reg query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" /v "Personal"') do (set docdir=%%b)
+md %docdir%\PC-info
+wmic useraccount list full >"%docdir%\PC-info\UserAccountDetails.txt"
 echo -%ESC%[32m Export WiFi passwords -%ESC%[36m https://www.elevenforum.com/t/backup-and-restore-wi-fi-network-profiles-in-windows-11.4472/ %ESC%[0m
 netsh wlan show profiles
-netsh wlan export profile key=clear folder=%UserProfile%\Documents\PC-info
+netsh wlan export profile key=clear folder=%docdir%\PC-info
 echo -%ESC%[32m Check if Users are a Microsoft account or Local account -%ESC%[36m https://www.tenforums.com/tutorials/5387-how-tell-if-local-account-microsoft-account-windows-10-a.html %ESC%[0m
-powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "Get-LocalUser | Select-Object Name,PrincipalSource | Out-File -filepath "$Env:userprofile\Documents\PC-info\All_Accounts.txt""
-echo -%ESC%[32m Saving PC information to -%ESC%[36m %UserProfile%\Documents\PC-info %ESC%[0m
-systeminfo > %UserProfile%\Documents\PC-info\SystemInfo.txt
-systeminfo /FO CSV > %UserProfile%\Documents\PC-info\SystemInfo.csv
+powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "Get-LocalUser | Select-Object Name,PrincipalSource | Out-File -filepath "%docdir%\PC-info\All_Accounts.txt""
+echo -%ESC%[92m List all Optional Capabilities - Save to -%ESC%[36m %docdir%\PC-info\Windows-Capability-listing-before-cleanup.txt %ESC%[0m
+dism /Online /Get-Capabilities /Format:Table > "%docdir%\PC-info\Windows-Capability-listing-before-cleanup.txt"
+echo -%ESC%[92m List all Optional Features - Save to -%ESC%[36m %docdir%\PC-info\Windows-Features-listing-before-cleanup.txt %ESC%[0m
+dism /Online /Get-Features /Format:Table > "%docdir%\PC-info\Windows-Features-listing-before-cleanup.txt"
+echo -%ESC%[92m List of Provisioned Application Packages - Save to -%ESC%[36m %docdir%\PC-info\AppPackages-before-cleanup.txt %ESC%[0m
+dism /Online /Get-ProvisionedAppxPackages > "%docdir%\PC-info\AppPackages-before-cleanup.txt"
+echo -%ESC%[92m List of Drivers - Save to -%ESC%[36m %docdir%\PC-info\Windows-Drivers.txt %ESC%[0m
+dism /Online /Get-Drivers /format:Table > "%docdir%\PC-info\Windows-Drivers.txt"
+echo -%ESC%[92m List of Packages - Save to -%ESC%[36m %docdir%\PC-info\Windows-Packages.txt %ESC%[0m
+dism /Online /Get-Packages /format:Table > "%docdir%\PC-info\Windows-Packages.txt"
+echo -%ESC%[92m International Settings - Save to -%ESC%[36m %docdir%\PC-info\International-Settings.txt %ESC%[0m
+dism /Online /Get-Intl > "%docdir%\PC-info\International-Settings.txt"
+echo -%ESC%[92m Saving PC information to -%ESC%[36m %docdir%\PC-info\SystemInfo.txt %ESC%[0m
+systeminfo > %docdir%\PC-info\SystemInfo.txt
+systeminfo /FO CSV > %docdir%\PC-info\SystemInfo.csv
+msinfo32 /report %docdir%\PC-info\Detailed-System-Information-MSInfo32.txt
+echo -%ESC%[92m Windows Version Information - -%ESC%[36m %docdir%\PC-info\Windows-version.txt %ESC%[0m
+ver > "%docdir%\PC-info\Windows-version.txt"
 
-msg "%username%" Please make sure you: `Read_First.txt
-Notepad "`Read_First.txt"
+for /f "delims=: tokens=*" %%x in ('findstr /b ::: "%~f0"') do @echo(%%x
+echo %ESC%[97m
+:::                                                            
+:::  ██╗    ██╗██╗███╗   ██╗██████╗  ██████╗ ██╗    ██╗███████╗
+:::  ██║    ██║██║████╗  ██║██╔══██╗██╔═══██╗██║    ██║██╔════╝
+:::  ██║ █╗ ██║██║██╔██╗ ██║██║  ██║██║   ██║██║ █╗ ██║███████╗
+:::  ██║███╗██║██║██║╚██╗██║██║  ██║██║   ██║██║███╗██║╚════██║
+:::  ╚███╔███╔╝██║██║ ╚████║██████╔╝╚██████╔╝╚███╔███╔╝███████║
+:::   ╚══╝╚══╝ ╚═╝╚═╝  ╚═══╝╚═════╝  ╚═════╝  ╚══╝╚══╝ ╚══════╝
+:::                                                            
+::: 	  ██████╗██╗     ███████╗ █████╗ ███╗   ██╗                
+::: 	 ██╔════╝██║     ██╔════╝██╔══██╗████╗  ██║                
+::: 	 ██║     ██║     █████╗  ███████║██╔██╗ ██║                
+::: 	 ██║     ██║     ██╔══╝  ██╔══██║██║╚██╗██║                
+::: 	 ╚██████╗███████╗███████╗██║  ██║██║ ╚████║                
+::: 	  ╚═════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝                
+:::  
+echo -%ESC%[91mPlease read carefully before proceding! %ESC%[0m
+echo -%ESC%[93mCleaning up Windows 10 and 11 could be a long process with many detailed steps, we're trying to cover most of them automatically. %ESC%[0m
+echo -%ESC%[93mThis is a long script and it can take (from my tests) anywhere between 10-30 minutes depending on the computer speed.
+echo The scrips will run automatically removing most of the bloatware and leaving a clean and lightweight Operating System
+echo %ESC%[96mImportant Notes:
+echo %ESC%[97m- computer needs to be signed in locally,%ESC%[91m not with a Microsoft Account%ESC%[97m, this script will disable Microsoft Syncronization, so a previous change to %ESC%[92mLocal Account%ESC%[97m is necesary
+echo - this script will %ESC%[95mdisable the Gaming platform and all cloud Syncronization %ESC%[97m
+echo - this script will remove a lot of %ESC%[95mbackground tasks and most of the Microsoft Store Apps %ESC%[97m
+echo - the script is self explanatory, lines of descriptione listed on every step
+echo - to speed up user experience and reduce eye strain the background is removed, %ESC%[94mColor Scheme turned to Dark, and Sound Scheme to no sounds! %ESC%[97m
+echo - the "hosts" file contains a list of bad websites, known for moral or controversial issues! Loaded to the right place, it will provide a first-hand protection to any computer. It may be attacked by some Antivirus Software.
+echo - While this is a big list of cleanup commands, it is not complete. Further cleaning is recommended by using a few Portable Apps from%ESC%[96m https://portableapps.com/apps/utilities %ESC%[0mlike:
+echo 	- PrivaZer -%ESC%[96m https://portableapps.com/apps/utilities/privazer-portable %ESC%[0m
+echo 	- Revo Uninstaller -%ESC%[96m https://portableapps.com/apps/utilities/revo_uninstaller_portable %ESC%[0m
+echo 	- Wise Disk Cleaner -%ESC%[96m https://portableapps.com/apps/utilities/wise-disk-cleaner-portable %ESC%[0m
+echo 	- Wise Registry Cleaner -%ESC%[96m https://portableapps.com/apps/utilities/wise-registry-cleaner-portable %ESC%[0m
+echo 	- ccPortable -%ESC%[96m https://portableapps.com/apps/utilities/ccportable %ESC%[0m
+echo 	- "O&O ShutUp10++" -%ESC%[96m https://www.oo-software.com/en/shutup10 %ESC%[0m
+
+msg "%username%" Please make sure you: Read the explanations before continuing!
+
 :Menu
 powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "Get-LocalUser | Select-Object Name,PrincipalSource"
-echo 	%ESC%[101;93m WARNING !!! %ESC%[0m
-echo %ESC%[33m -------------------------------- %ESC%[0m
-echo %ESC%[31m If you see a%ESC%[0m %ESC%[41mMicrosoftAccount%ESC%[0m %ESC%[31min the above list, please stop and switch to%ESC%[0m %ESC%[32mLocal Account%ESC%[0m
+echo 	%ESC%[101;93m WARNING %ESC%[0m
+echo %ESC%[33m ----------------------------- %ESC%[0m
+echo %ESC%[91m If you see a%ESC%[0m %ESC%[41mMicrosoftAccount%ESC%[0m %ESC%[91min the above list, please stop and switch to%ESC%[0m %ESC%[32mLocal Account%ESC%[0m
 echo   %ESC%[1m(%ESC%[0m%ESC%[31mU%ESC%[0m%ESC%[1m)%ESC%[0m Open User Accounts
 echo   %ESC%[1m(%ESC%[0m%ESC%[31mC%ESC%[0m%ESC%[1m)%ESC%[0m Continue
 echo   %ESC%[1m(%ESC%[0m%ESC%[31mX%ESC%[0m%ESC%[1m)%ESC%[0m STOP
@@ -51,7 +104,7 @@ rem bcdedit /set hypervisorlaunchtype off
 rem dism /Online /NoRestart /Disable-Feature:Microsoft-Hyper-V /NoRestart
 
 echo -%ESC%[32m To prevent a specific update from installing Download the "Show or hide updates" troubleshooter package from the Microsoft website: %ESC%[36m https://download.microsoft.com/download/f/2/2/f22d5fdb-59cd-4275-8c95-1be17bf70b21/wushowhide.diagcab %ESC%[0m
-powershell -c "Invoke-WebRequest -Uri 'https://download.microsoft.com/download/f/2/2/f22d5fdb-59cd-4275-8c95-1be17bf70b21/wushowhide.diagcab' -OutFile '%UserProfile%\Documents\PC-info\wushowhide.diagcab'"
+powershell -c "Invoke-WebRequest -Uri 'https://download.microsoft.com/download/f/2/2/f22d5fdb-59cd-4275-8c95-1be17bf70b21/wushowhide.diagcab' -OutFile '%docdir%\PC-info\wushowhide.diagcab'"
 
 echo -%ESC%[32m Microsoft Edge uninstall %ESC%[0m
 powershell.exe -ExecutionPolicy Bypass -File ./Edge-uninstall.ps1
@@ -207,8 +260,7 @@ reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /f /v
 echo -%ESC%[32m Setting Mixed Reality Portal value to 0 so that you can uninstall it in Settings %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Holographic" /f /v "FirstRunSucceeded " /t REG_DWORD /d 0
 
-echo %ESC%[35m Remove Optional Features - List all Optional Features %ESC%[0m
-dism /Online /NoRestart /Get-Capabilities
+echo %ESC%[35m Remove Optional Capabilities %ESC%[0m
 echo -%ESC%[32m "Remove Windows Media Player:" %ESC%[0m
 dism /Online /NoRestart /Remove-Capability /CapabilityName:Media.WindowsMediaPlayer~~~~0.0.12.0
 echo -%ESC%[32m "Remove Feature: Extended Inbox Theme Content:" %ESC%[0m
@@ -237,13 +289,15 @@ echo -%ESC%[32m "Remove Contact Support:" %ESC%[0m
 
 echo -%ESC%[32m "Remove Language Speech:" %ESC%[0m
 
-echo %ESC%[35m Add Optional Features %ESC%[0m
+echo %ESC%[35m Add Optional Capabilities %ESC%[0m
 echo -%ESC%[32m Add Feature: Print Fax Scan %ESC%[0m
 dism /Online /NoRestart /Add-Capability /CapabilityName:Print.Fax.Scan~~~~0.0.1.0
 echo -%ESC%[32m Add Feature: WMIC. A Windows Management Instrumentation (WMI) command-line utility. %ESC%[0m
 dism /Online /NoRestart /Add-Capability /CapabilityName:WMIC~~~~
 echo -%ESC%[32m Add .NET Framework %ESC%[0m
 dism /Online /NoRestart /Add-Capability /CapabilityName:NetFX3~~~~
+echo %ESC%[92m List all Optional Capabilities - Save to Documents\PC-info %ESC%[0m
+dism /Online /Get-Capabilities /Format:Table > "%docdir%\PC-info\Windows-Capability-listing-after-cleanup.txt"
 
 echo %ESC%[35m Enable High Performance Power Scheme %ESC%[0m
 powercfg /l
@@ -857,7 +911,7 @@ sc delete lfsvc
 schtasks /Change /TN "\Microsoft\Windows\Maps\MapsUpdateTask" /disable
 
 echo %ESC%[35m Disables scheduled tasks that are considered unnecessary %ESC%[0m
-schtasks /query /v /fo CSV > "%UserProfile%\Documents\Settings\tasks.csv"​
+schtasks /query /v /fo CSV > "%docdir%\tasks.csv"​
 echo -%ESC%[32m EDP Policy Manager - This task performs steps necessary to configure Windows Information Protection. %ESC%[0m
 schtasks /Change /TN "\Microsoft\Windows\AppID\EDP Policy Manager" /disable :: Inspects the AppID certificate cache for invalid or revoked certificates.
 :: schtasks /Change /TN "\Microsoft\Windows\AppID\VerifiedPublisherCertStoreCheck" /disable
@@ -1118,7 +1172,7 @@ winget upgrade --all --silent --force --include-unknown
 
 echo -%ESC%[32m Run Disk Cleanup - Runs Disk Cleanup on Drive C: and removes old Windows Updates. -%ESC%[36m https://ss64.com/nt/cleanmgr.html %ESC%[0m
 cleanmgr.exe /d C: /VERYLOWDISK /Autoclean
-Dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase
+dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase
 
 echo -%ESC%[32m Verify System Files %ESC%[0m
 sfc /scannow
