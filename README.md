@@ -1,19 +1,17 @@
-# Windows_10-11-cleanup_script
-Clean-up ideas for a faster and lighter Windows OS
-                                                         
- ██╗    ██╗██╗███╗   ██╗██████╗  ██████╗ ██╗    ██╗███████╗
- ██║    ██║██║████╗  ██║██╔══██╗██╔═══██╗██║    ██║██╔════╝
- ██║ █╗ ██║██║██╔██╗ ██║██║  ██║██║   ██║██║ █╗ ██║███████╗
- ██║███╗██║██║██║╚██╗██║██║  ██║██║   ██║██║███╗██║╚════██║
- ╚███╔███╔╝██║██║ ╚████║██████╔╝╚██████╔╝╚███╔███╔╝███████║
-  ╚══╝╚══╝ ╚═╝╚═╝  ╚═══╝╚═════╝  ╚═════╝  ╚══╝╚══╝ ╚══════╝
 
-	 ██████╗██╗     ███████╗ █████╗ ███╗   ██╗
-	██╔════╝██║     ██╔════╝██╔══██╗████╗  ██║
-	██║     ██║     █████╗  ███████║██╔██╗ ██║
-	██║     ██║     ██╔══╝  ██╔══██║██║╚██╗██║
-	╚██████╗███████╗███████╗██║  ██║██║ ╚████║
-	 ╚═════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝
+	██╗    ██╗██╗███╗   ██╗██████╗  ██████╗ ██╗    ██╗███████╗
+	██║    ██║██║████╗  ██║██╔══██╗██╔═══██╗██║    ██║██╔════╝
+	██║ █╗ ██║██║██╔██╗ ██║██║  ██║██║   ██║██║ █╗ ██║███████╗
+	██║███╗██║██║██║╚██╗██║██║  ██║██║   ██║██║███╗██║╚════██║
+	╚███╔███╔╝██║██║ ╚████║██████╔╝╚██████╔╝╚███╔███╔╝███████║
+	╚══╝╚══╝ ╚═╝╚═╝  ╚═══╝╚═════╝  ╚═════╝  ╚══╝╚══╝ ╚══════╝
+
+		██████╗██╗     ███████╗ █████╗ ███╗   ██╗
+		██╔════╝██║     ██╔════╝██╔══██╗████╗  ██║
+		██║     ██║     █████╗  ███████║██╔██╗ ██║
+		██║     ██║     ██╔══╝  ██╔══██║██║╚██╗██║
+		╚██████╗███████╗███████╗██║  ██║██║ ╚████║
+		╚═════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝
 
 Cleaning up Windows 10 and 11 could be a long process with many detailed steps, we're trying to cover most of them automatically.
 Please read entirely before proceding!
@@ -32,6 +30,17 @@ For our purpose here we need the five files saved in the same location and run W
 really want it (you may remove # to block)! Loaded to the right place, it will provide a first-hand protection to any computer. It may be attacked by some Antivirus Software.
 
 The scrips will run automatically removing most of the bloatware and leaving a clean and lightweight Operating System
+
+Setting up a a CLEAN COMPUTER:
+
+1. First step is to obtain a clean copy of the operating system directly from source.
+- Windows 10 - https://www.microsoft.com/en-us/software-download/windows10
+- Windows 11 - https://www.microsoft.com/en-us/software-download/windows11
+- Here we choose and create installation media, using a 8+ GB USB drive and we save on the usb the cleanup files mentioned above
+2. Any new computer comes preloaded with bloatware, no matter where it was purchased, so first thing to do is to wipe clean the internal Drive, so we can start from scratch! (I will include details later)
+3. With computer disconnected from internet, we start the installation from the created USB
+4. Once installed, we copy the cleanup files in a dedicated location, for example Downloads and we run the WinClean.bat script
+5. After restart we connect to the internet and Activate Windows then we can run the script again so it will be able to run the online commands as well
 
 Important Notes:
 - computer needs to be signed in locally, not with a Microsoft Account, this script will disable Microsoft Syncronization, so a previous change to Local Account is necesary
