@@ -1,4 +1,5 @@
 @echo off
+net.exe session 1>NUL 2>NUL || (Echo This script requires elevated rights. Please accept Administrator rights & powershell -Command "Start-Process 'winclean.bat' -Verb runAs" & exit /b 1)
 echo "Color" Sets the default console foreground and background colours. %ESC%[36m https://ss64.com/nt/color.html
 Color 07
 :: Maximize the window
@@ -48,20 +49,20 @@ Rundll32.exe keymgr.dll,KRShowKeyMgr
 
 for /f "delims=: tokens=*" %%x in ('findstr /b ::: "%~f0"') do @echo(%%x
 echo %ESC%[97m
-:::                                                            
+::: 
 :::  ██╗    ██╗██╗███╗   ██╗██████╗  ██████╗ ██╗    ██╗███████╗
 :::  ██║    ██║██║████╗  ██║██╔══██╗██╔═══██╗██║    ██║██╔════╝
 :::  ██║ █╗ ██║██║██╔██╗ ██║██║  ██║██║   ██║██║ █╗ ██║███████╗
 :::  ██║███╗██║██║██║╚██╗██║██║  ██║██║   ██║██║███╗██║╚════██║
 :::  ╚███╔███╔╝██║██║ ╚████║██████╔╝╚██████╔╝╚███╔███╔╝███████║
 :::   ╚══╝╚══╝ ╚═╝╚═╝  ╚═══╝╚═════╝  ╚═════╝  ╚══╝╚══╝ ╚══════╝
-:::                                                            
-::: 	  ██████╗██╗     ███████╗ █████╗ ███╗   ██╗                
-::: 	 ██╔════╝██║     ██╔════╝██╔══██╗████╗  ██║                
-::: 	 ██║     ██║     █████╗  ███████║██╔██╗ ██║                
-::: 	 ██║     ██║     ██╔══╝  ██╔══██║██║╚██╗██║                
-::: 	 ╚██████╗███████╗███████╗██║  ██║██║ ╚████║                
-::: 	  ╚═════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝                
+:::  
+::: 	  ██████╗██╗     ███████╗ █████╗ ███╗   ██╗
+::: 	 ██╔════╝██║     ██╔════╝██╔══██╗████╗  ██║
+::: 	 ██║     ██║     █████╗  ███████║██╔██╗ ██║
+::: 	 ██║     ██║     ██╔══╝  ██╔══██║██║╚██╗██║
+::: 	 ╚██████╗███████╗███████╗██║  ██║██║ ╚████║
+::: 	  ╚═════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝
 :::  
 echo -%ESC%[91mPlease read carefully before proceding! %ESC%[0m
 echo -%ESC%[93mCleaning up Windows 10 and 11 could be a long process with many detailed steps, we're trying to cover most of them automatically. %ESC%[0m
@@ -1179,6 +1180,9 @@ powershell.exe -ExecutionPolicy Bypass -File WinClean.ps1
 echo -%ESC%[32m Update all installed programs %ESC%[0m
 winget upgrade --all --silent --force --include-unknown
 
+echo -%ESC%[32m Delete all temporary files %ESC%[0m
+del /q /f /s %temp%\* && del /s /q c:\Windows\temp
+
 echo -%ESC%[32m Run Disk Cleanup - Runs Disk Cleanup on Drive C: and removes old Windows Updates. -%ESC%[36m https://ss64.com/nt/cleanmgr.html %ESC%[0m
 cleanmgr.exe /d C: /VERYLOWDISK /Autoclean
 dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase
@@ -1186,5 +1190,5 @@ dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase
 echo -%ESC%[32m Verify System Files %ESC%[0m
 sfc /scannow
 echo -%ESC%[32m PC will restart in 10 seconds unless you type: shutdown /a %ESC%[0m
-shutdown -r /t 10
+shutdown /r /t 10
 :End
