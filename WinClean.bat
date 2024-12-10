@@ -9,6 +9,14 @@ chcp 65001 > nul
 :: Generate ANSI ESC characters for color codes
 for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set ESC=%%b
 echo %ESC%[1m- Commands sintax and utils @ %ESC%[36m https://ss64.com %ESC%[0m
+echo %ESC%[1m- Update script %ESC%[96m and Self-Healing %ESC%[0m
+:: Please comment out the following lines if you are customizing the script, otherwise it will auto-heal :-)
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/a19cc2cc16294b4c59abb55e37511291a181931d/WinClean.bat' -OutFile WinClean.bat"
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/a19cc2cc16294b4c59abb55e37511291a181931d/Edge-uninstall.ps1' -OutFile Edge-uninstall.ps1"
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/a19cc2cc16294b4c59abb55e37511291a181931d/OneDrive-uninstall.ps1' -OutFile OneDrive-uninstall.ps1"
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/a19cc2cc16294b4c59abb55e37511291a181931d/README.md' -OutFile '`Read_First.txt'"
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/a19cc2cc16294b4c59abb55e37511291a181931d/WinClean.ps1' -OutFile WinClean.ps1"
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/a19cc2cc16294b4c59abb55e37511291a181931d/hosts' -OutFile hosts"
 
 echo -%ESC%[32m Save important PC information to Documents\PC-info %ESC%[0m -%ESC%[36m https://www.tenforums.com/tutorials/3443-view-user-account-details-windows-10-a.html %ESC%[0m
 FOR /F "tokens=2* skip=2" %%a in ('reg query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" /v "Personal"') do (set docdir=%%b)
@@ -44,8 +52,7 @@ powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "
 sc query state=all > %docdir%\PC-info\All-Services-before-cleanup.txt
 sc query > %docdir%\PC-info\Running-Services-before-cleanup.txt
 net start > %docdir%\PC-info\List-of-Running-Services-before-cleanup.txt
-echo -%ESC%[92m Please Backup your credentials to -%ESC%[36m %docdir%\PC-info\Credentials.crd %ESC%[0m
-Rundll32.exe keymgr.dll,KRShowKeyMgr
+echo -%ESC%[92m Please Backup your credentials to -%ESC%[36m %docdir%\PC-info\Credentials.crd %ESC%[0m by running: Rundll32.exe keymgr.dll,KRShowKeyMgr
 
 for /f "delims=: tokens=*" %%x in ('findstr /b ::: "%~f0"') do @echo(%%x
 echo %ESC%[97m
@@ -112,16 +119,17 @@ reg add "HKLM\System\CurrentControlSet\Control\TimeZoneInformation" /f /v RealTi
 rem wmic computersystem rename Work-PC
 :: Disable Hyper-V:
 rem bcdedit /set hypervisorlaunchtype off
-rem dism /Online /NoRestart /Disable-Feature:Microsoft-Hyper-V /NoRestart
+rem dism /Online /NoRestart /Disable-Feature:Microsoft-Hyper-V
 
 echo -%ESC%[32m To prevent a specific update from installing Download the "Show or hide updates" troubleshooter package from the Microsoft website: %ESC%[36m https://download.microsoft.com/download/f/2/2/f22d5fdb-59cd-4275-8c95-1be17bf70b21/wushowhide.diagcab %ESC%[0m
 powershell -c "Invoke-WebRequest -Uri 'https://download.microsoft.com/download/f/2/2/f22d5fdb-59cd-4275-8c95-1be17bf70b21/wushowhide.diagcab' -OutFile '%docdir%\PC-info\wushowhide.diagcab'"
 
 echo -%ESC%[32m Microsoft Edge uninstall %ESC%[0m
-powershell.exe -ExecutionPolicy Bypass -File ./Edge-uninstall.ps1
+IF EXIST Edge-uninstall.ps1 (powershell.exe -ExecutionPolicy Bypass -File ./Edge-uninstall.ps1 ) ELSE (msg "%username%" Edge-uninstall.ps1 not found! & echo Edge-uninstall.ps1 not found! )
 
 echo -%ESC%[32m Microsoft OneDrive uninstall %ESC%[0m
-powershell.exe -ExecutionPolicy Bypass -File ./OneDrive-uninstall.ps1
+IF EXIST OneDrive-uninstall.ps1 (powershell.exe -ExecutionPolicy Bypass -File ./OneDrive-uninstall.ps1 ) ELSE (msg "%username%" OneDrive-uninstall.ps1 not found! & echo OneDrive-uninstall.ps1 not found! )
+
 echo -%ESC%[32m Removing OneDrive leftovers. %ESC%[0m
 set x86="%SYSTEMROOT%\System32\OneDriveSetup.exe"
 set x64="%SYSTEMROOT%\SysWOW64\OneDriveSetup.exe"
@@ -363,7 +371,7 @@ powershell -inputformat none -outputformat none -NonInteractive -Command "Add-Mp
 powershell -inputformat none -outputformat none -NonInteractive -Command "Add-MpPreference -ExclusionPath '%SystemRoot%\System32\drivers\etc\hosts'"
 
 echo -%ESC%[32m Transfer Hosts File: %ESC%[0m
-copy /D /V /Y hosts %SystemRoot%\System32\drivers\etc\hosts
+IF EXIST hosts (copy /D /V /Y hosts %SystemRoot%\System32\drivers\etc\hosts ) ELSE (msg "%username%" hosts file not found! & echo hosts file not found! )
 
 echo -%ESC%[32m Turn off background apps + Privacy settings; Created by: Shawn Brink; Created on: October 17th 2016: Tutorial: %ESC%[36m http://www.tenforums.com/tutorials/7225-background-apps-turn-off-windows-10-a.html %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /f /v "GlobalUserDisabled" /t REG_DWORD /d 1
@@ -1175,7 +1183,7 @@ winget install -e -i --id=9NMZLZ57R3T7 --source=msstore
 
 taskkill /f /im explorer.exe
 
-powershell.exe -ExecutionPolicy Bypass -File WinClean.ps1
+IF EXIST WinClean3.ps1 (powershell.exe -ExecutionPolicy Bypass -File ./WinClean.ps1 ) ELSE (msg "%username%" WinClean.ps1 not found! & echo WinClean.ps1 not found! )
 
 echo -%ESC%[32m Update all installed programs %ESC%[0m
 winget upgrade --all --silent --force --include-unknown
