@@ -13,11 +13,10 @@
 		╚██████╗███████╗███████╗██║  ██║██║ ╚████║
 		╚═════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝
 
-Cleaning up Windows 10 and 11 could be a long process with many detailed steps, we're trying to cover most of them automatically.
+Cleaning up Windows 10 and 11 could be a long process with many detailed steps, we're trying to cover most of them automatically. If you prefer an interactive method, please check Chris Titus https://github.com/ChrisTitusTech/winutil and O&O ShutUp10++ https://www.oo-software.com/en/shutup10
 Please read entirely before proceding!
 
-Because the script is deleting tracking services, some Antivirus software may block the process, if that is the case,
-antivirus may be manualy stopped and restarted after the cleanup.
+Because the script is deleting tracking services, some Antivirus software may block the process, if that is the case, antivirus may be manualy stopped and restarted after the cleanup.
 
 This is a long script and it can take (from my tests) anywhere between 10-30 minutes depending on the computer speed.
 
@@ -26,8 +25,7 @@ For our purpose here we need the five files saved in the same location and run W
 - WinClean.ps1 - contains some extended Powershell scripts too big to be called inside a batch file
 - OneDrive-uninstall.ps1 - dedicated Microsoft OneDrive uninstall script
 - Edge-uninstall.ps1 - dedicated Microsoft Edge uninstall script
-- the "hosts" file contains a list of bad websites, known for moral or controversial issues, facebook included but enabled for people who 
-really want it (you may remove # to block)! Loaded to the right place, it will provide a first-hand protection to any computer. It may be attacked by some Antivirus Software.
+- the "hosts" file contains a list of bad websites, known for moral or controversial issues! Loaded to the right place, it will provide a first-hand protection to any computer. It may be attacked by some Antivirus Software.
 
 The scrips will run automatically removing most of the bloatware and leaving a clean and lightweight Operating System
 
