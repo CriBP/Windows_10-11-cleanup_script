@@ -14,7 +14,7 @@ echo %ESC%[1m- Update script %ESC%[96m and Self-Healing %ESC%[0m
 powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/a19cc2cc16294b4c59abb55e37511291a181931d/WinClean.bat' -OutFile WinClean.bat"
 powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/a19cc2cc16294b4c59abb55e37511291a181931d/Edge-uninstall.ps1' -OutFile Edge-uninstall.ps1"
 powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/a19cc2cc16294b4c59abb55e37511291a181931d/OneDrive-uninstall.ps1' -OutFile OneDrive-uninstall.ps1"
-powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/a19cc2cc16294b4c59abb55e37511291a181931d/README.md' -OutFile '`Read_First.txt'"
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/b2b9ce4036a76f7bdcdfbe79b3f95a1b5f913e74/%60Read_First.txt' -OutFile '`Read_First.txt'"
 powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/a19cc2cc16294b4c59abb55e37511291a181931d/WinClean.ps1' -OutFile WinClean.ps1"
 powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/a19cc2cc16294b4c59abb55e37511291a181931d/hosts' -OutFile hosts"
 
