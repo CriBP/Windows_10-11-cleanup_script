@@ -1,9 +1,15 @@
 @echo off
-net.exe session 1>NUL 2>NUL || (Echo This script requires elevated rights. Please accept Administrator rights & powershell -Command "Start-Process 'winclean.bat' -Verb runAs" & exit /b 1)
+:: Setup Winclean environment:
+FOR /F "tokens=2* skip=2" %%a in ('reg query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" /v "{374DE290-123F-4565-9164-39C4925E467B}"') do (set downloaddir=%%b)
+md %downloaddir%\WinClean
+cd %downloaddir%\WinClean
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/WinClean.bat' -OutFile %downloaddir%\WinClean\WinClean.bat"
+
+net.exe session 1>NUL 2>NUL || (Echo This script requires elevated rights. Please accept Administrator rights & powershell -Command "Start-Process '%downloaddir%\WinClean\winclean.bat' -Verb runAs" & exit /b 1) > CleanUp.log
 echo "Color" Sets the default console foreground and background colours. %ESC%[36m https://ss64.com/nt/color.html
 Color 07
 :: Maximize the window
-if not "%1"=="max" start /max cmd /c %0 max & Exit /b
+if not "%1"=="max" start /max %downloaddir%\WinClean\winclean.bat /c %0 max & Exit /b
 :: Changed the Encoding to chcp 65001 > nul [ Unicode Encoding ]
 chcp 65001 > nul
 :: Generate ANSI ESC characters for color codes
@@ -11,12 +17,11 @@ for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1)
 echo %ESC%[1m- Commands sintax and utils @ %ESC%[36m https://ss64.com %ESC%[0m
 echo %ESC%[1m- Update script %ESC%[96m and Self-Healing %ESC%[0m
 :: Please comment out the following lines if you are customizing the script, otherwise it will auto-heal :-)
-powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/WinClean.bat' -OutFile WinClean.bat"
-powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/Edge-uninstall.ps1' -OutFile Edge-uninstall.ps1"
-powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/OneDrive-uninstall.ps1' -OutFile OneDrive-uninstall.ps1"
-powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/Read_First.txt' -OutFile 'Read_First.txt'"
-powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/WinClean.ps1' -OutFile WinClean.ps1"
-powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/hosts' -OutFile hosts"
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/Edge-uninstall.ps1' -OutFile %downloaddir%\WinClean\Edge-uninstall.ps1"
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/OneDrive-uninstall.ps1' -OutFile %downloaddir%\WinClean\OneDrive-uninstall.ps1"
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/Read_First.txt' -OutFile %downloaddir%\WinClean\Read_First.txt"
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/WinClean.ps1' -OutFile %downloaddir%\WinClean\WinClean.ps1"
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/hosts' -OutFile %downloaddir%\WinClean\hosts"
 
 echo -%ESC%[32m Save important PC information to Documents\PC-info %ESC%[0m -%ESC%[36m https://www.tenforums.com/tutorials/3443-view-user-account-details-windows-10-a.html %ESC%[0m
 FOR /F "tokens=2* skip=2" %%a in ('reg query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" /v "Personal"') do (set docdir=%%b)
