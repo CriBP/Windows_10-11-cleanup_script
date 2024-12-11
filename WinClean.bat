@@ -1183,7 +1183,7 @@ winget install -e -i --id=9NMZLZ57R3T7 --source=msstore
 
 taskkill /f /im explorer.exe
 
-IF EXIST WinClean3.ps1 (powershell.exe -ExecutionPolicy Bypass -File ./WinClean.ps1 ) ELSE (msg "%username%" WinClean.ps1 not found! & echo WinClean.ps1 not found! )
+IF EXIST WinClean.ps1 (powershell.exe -ExecutionPolicy Bypass -File ./WinClean.ps1 ) ELSE (msg "%username%" WinClean.ps1 not found! & echo WinClean.ps1 not found! )
 
 echo -%ESC%[32m Update all installed programs %ESC%[0m
 winget upgrade --all --silent --force --include-unknown
