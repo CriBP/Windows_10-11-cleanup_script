@@ -11,12 +11,12 @@ for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1)
 echo %ESC%[1m- Commands sintax and utils @ %ESC%[36m https://ss64.com %ESC%[0m
 echo %ESC%[1m- Update script %ESC%[96m and Self-Healing %ESC%[0m
 :: Please comment out the following lines if you are customizing the script, otherwise it will auto-heal :-)
-powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/a19cc2cc16294b4c59abb55e37511291a181931d/WinClean.bat' -OutFile WinClean.bat"
-powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/a19cc2cc16294b4c59abb55e37511291a181931d/Edge-uninstall.ps1' -OutFile Edge-uninstall.ps1"
-powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/a19cc2cc16294b4c59abb55e37511291a181931d/OneDrive-uninstall.ps1' -OutFile OneDrive-uninstall.ps1"
-powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/b2b9ce4036a76f7bdcdfbe79b3f95a1b5f913e74/%60Read_First.txt' -OutFile '`Read_First.txt'"
-powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/a19cc2cc16294b4c59abb55e37511291a181931d/WinClean.ps1' -OutFile WinClean.ps1"
-powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/blob/a19cc2cc16294b4c59abb55e37511291a181931d/hosts' -OutFile hosts"
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/WinClean.bat' -OutFile WinClean.bat"
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/Edge-uninstall.ps1' -OutFile Edge-uninstall.ps1"
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/OneDrive-uninstall.ps1' -OutFile OneDrive-uninstall.ps1"
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/%60Read_First.txt' -OutFile '`Read_First.txt'"
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/WinClean.ps1' -OutFile WinClean.ps1"
+powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/hosts' -OutFile hosts"
 
 echo -%ESC%[32m Save important PC information to Documents\PC-info %ESC%[0m -%ESC%[36m https://www.tenforums.com/tutorials/3443-view-user-account-details-windows-10-a.html %ESC%[0m
 FOR /F "tokens=2* skip=2" %%a in ('reg query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" /v "Personal"') do (set docdir=%%b)
@@ -45,8 +45,8 @@ systeminfo /FO CSV > %docdir%\PC-info\SystemInfo.csv
 msinfo32 /report %docdir%\PC-info\Detailed-System-Information-MSInfo32.txt
 echo -%ESC%[92m Windows Version Information - -%ESC%[36m %docdir%\PC-info\Windows-version.txt %ESC%[0m
 ver > "%docdir%\PC-info\Windows-version.txt"
-echo -%ESC%[92m Export Current Tasks to -%ESC%[36m %docdir%\PC-info\Tasks-before-cleanup.txt %ESC%[0m
-schtasks /query /v /fo CSV > "%docdir%\PC-info\Tasks-before-cleanup.txt"​
+echo -%ESC%[92m Export Current Tasks to -%ESC%[36m %docdir%\PC-info\Tasks-before-cleanup.csv %ESC%[0m
+schtasks /query /v /fo CSV > "%docdir%\PC-info\Tasks-before-cleanup.csv"​
 echo -%ESC%[92m Export Windows Services to -%ESC%[36m %docdir%\PC-info\Services-before-cleanup.csv %ESC%[0m
 powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "Get-CIMInstance -Class Win32_Service | Select-Object Name, DisplayName, Description, StartMode, DelayedAutoStart, StartName, PathName, State, ProcessId | Export-CSV -Path %docdir%\PC-info\Services-before-cleanup.csv​"
 sc query state=all > %docdir%\PC-info\All-Services-before-cleanup.txt
