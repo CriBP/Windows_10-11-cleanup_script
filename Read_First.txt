@@ -20,7 +20,7 @@ Because the script is deleting tracking services, some Antivirus software may bl
 
 This is a long script and it can take (from my tests) anywhere between 10-30 minutes depending on the computer speed.
 
-For our purpose here we need the five files saved in the same location and run WinClean.bat file that will elevate itself asking Administrator permission so it can run. Here are the 5 files needed
+For our purpose here we need the five files saved in the same location and run WinClean.bat file that will elevate itself asking Administrator permission so it can run The file "setup.bat" will download and run all the scripts. Here are the 5 files needed
 - WinClean.bat - The main cleanup script - will call the other scripts automatically
 - WinClean.ps1 - contains some extended Powershell scripts too big to be called inside a batch file
 - OneDrive-uninstall.ps1 - dedicated Microsoft OneDrive uninstall script
@@ -46,7 +46,7 @@ Important Notes:
 - this script will remove a lot of background tasks and most of the Microsoft Store Apps
 - the scripts are self explanatory, they have lines of description on every step
 - to speed up user experience and reduce eye strain the background is removed, Color Scheme turned to Dark, and no sounds
-- these scrips were made speciffically for Ekklesia PC's cleanup, but they can work on any Windows PC, and can be customized
+- the script starts with saving important PC information, it can work on any Windows PC, and it can be customized
 - While this is a big list of cleanup commands, it is not complete. Further cleaning is recommended by using a few Portable Apps from https://portableapps.com/apps/utilities like:
  	- PrivaZer - https://portableapps.com/apps/utilities/privazer-portable
 	- Revo Uninstaller - https://portableapps.com/apps/utilities/revo_uninstaller_portable
