@@ -14,3 +14,4 @@ powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cl
 powershell -c "Invoke-WebRequest -Uri 'https://github.com/CriBP/Windows_10-11-cleanup_script/raw/refs/heads/main/hosts' -OutFile %downloaddir%\WinClean\hosts"
 
 net.exe session 1>NUL 2>NUL || (Echo This script requires elevated rights. Please accept Administrator rights & powershell -Command "Start-Process '%downloaddir%\WinClean\winclean.bat' -Verb runAs" & exit /b 1) > %downloaddir%\WinClean\CleanUp.log
+pause

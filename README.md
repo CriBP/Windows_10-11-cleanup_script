@@ -14,6 +14,7 @@
 		╚═════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝
 
 Cleaning up Windows 10 and 11 could be a long process with many detailed steps, we're trying to cover most of them automatically. If you prefer an interactive method, please check Chris Titus https://github.com/ChrisTitusTech/winutil and O&O ShutUp10++ https://www.oo-software.com/en/shutup10
+
 Please read entirely before proceding!
 
 Because the script is deleting tracking services, some Antivirus software may block the process, if that is the case, antivirus may be manualy stopped and restarted after the cleanup.
@@ -54,4 +55,5 @@ Important Notes:
 	- Wise Registry Cleaner - https://portableapps.com/apps/utilities/wise-registry-cleaner-portable
 	- ccPortable - https://portableapps.com/apps/utilities/ccportable
 	- O&O ShutUp10++ - https://www.oo-software.com/en/shutup10
+	
 -"FileTypes" is just a collection of example files that helps with File Association
