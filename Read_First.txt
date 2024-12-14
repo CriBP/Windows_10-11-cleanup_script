@@ -20,7 +20,7 @@ Because the script is deleting tracking services, some Antivirus software may bl
 
 This is a long script and it can take (from my tests) anywhere between 10-30 minutes depending on the computer speed.
 
-For our purpose here we need the five files saved in the same location and run WinClean.bat file that will elevate itself asking Administrator permission so it can run The file "setup.bat" will download and run all the scripts. Here are the 5 files needed
+For our purpose here we need the five files saved in the same location and run WinClean.bat file that will elevate itself asking Administrator permission so it can run. The file "setup.bat" will download and run all the scripts. Here are the 5 files needed
 - WinClean.bat - The main cleanup script - will call the other scripts automatically
 - WinClean.ps1 - contains some extended Powershell scripts too big to be called inside a batch file
 - OneDrive-uninstall.ps1 - dedicated Microsoft OneDrive uninstall script
