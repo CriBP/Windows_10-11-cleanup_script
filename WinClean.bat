@@ -15,40 +15,47 @@ echo %ESC%[1m- Changed the Encoding to chcp 65001 > nul %ESC%[96m [ Unicode Enco
 chcp 65001 > nul
 
 echo -%ESC%[32m Save important PC information to Documents\PC-info %ESC%[0m -%ESC%[36m https://www.tenforums.com/tutorials/3443-view-user-account-details-windows-10-a.html %ESC%[0m
+FOR /F "tokens=2* skip=2" %%a in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\BIOS" /v "BaseBoardManufacturer"') do (set mb=%%b)
+FOR /F "tokens=2* skip=2" %%a in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\BIOS" /v "BaseBoardProduct"') do (set model=%%b)
+FOR /F "tokens=2* skip=2" %%a in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\0" /v "ProcessorNameString"') do (set cpu=%%b)
 FOR /F "tokens=2* skip=2" %%a in ('reg query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" /v "Personal"') do (set docdir=%%b)
-md %docdir%\PC-info
-wmic useraccount list full >"%docdir%\PC-info\UserAccountDetails.txt"
+echo %cpu% on %mb% - %model%
+md "%docdir%\%mb% %model% PC-info"
+wmic useraccount list full >"%docdir%\%mb% %model% PC-info\UserAccountDetails.txt"
 echo -%ESC%[32m Export WiFi passwords -%ESC%[36m https://www.elevenforum.com/t/backup-and-restore-wi-fi-network-profiles-in-windows-11.4472/ %ESC%[0m
 netsh wlan show profiles
-netsh wlan export profile key=clear folder=%docdir%\PC-info
+netsh wlan export profile key=clear folder="%docdir%\%mb% %model% PC-info"
 echo -%ESC%[32m Check if Users are a Microsoft account or Local account -%ESC%[36m https://www.tenforums.com/tutorials/5387-how-tell-if-local-account-microsoft-account-windows-10-a.html %ESC%[0m
-powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "Get-LocalUser | Select-Object Name,PrincipalSource | Out-File -filepath %docdir%\PC-info\All_Accounts.txt"
-echo -%ESC%[92m List all Optional Capabilities - Save to -%ESC%[36m %docdir%\PC-info\Windows-Capability-listing-before-cleanup.txt %ESC%[0m
-dism /Online /Get-Capabilities /Format:Table > "%docdir%\PC-info\Windows-Capability-listing-before-cleanup.txt"
-echo -%ESC%[92m List all Optional Features - Save to -%ESC%[36m %docdir%\PC-info\Windows-Features-listing-before-cleanup.txt %ESC%[0m
-dism /Online /Get-Features /Format:Table > "%docdir%\PC-info\Windows-Features-listing-before-cleanup.txt"
-echo -%ESC%[92m List of Provisioned Application Packages - Save to -%ESC%[36m %docdir%\PC-info\AppPackages-before-cleanup.txt %ESC%[0m
-dism /Online /Get-ProvisionedAppxPackages > "%docdir%\PC-info\AppPackages-before-cleanup.txt"
-echo -%ESC%[92m List of Drivers - Save to -%ESC%[36m %docdir%\PC-info\Windows-Drivers.txt %ESC%[0m
-dism /Online /Get-Drivers /format:Table > "%docdir%\PC-info\Windows-Drivers.txt"
-echo -%ESC%[92m List of Packages - Save to -%ESC%[36m %docdir%\PC-info\Windows-Packages.txt %ESC%[0m
-dism /Online /Get-Packages /format:Table > "%docdir%\PC-info\Windows-Packages.txt"
-echo -%ESC%[92m International Settings - Save to -%ESC%[36m %docdir%\PC-info\International-Settings.txt %ESC%[0m
-dism /Online /Get-Intl > "%docdir%\PC-info\International-Settings.txt"
-echo -%ESC%[92m Saving PC information to -%ESC%[36m %docdir%\PC-info\SystemInfo.txt %ESC%[0m
-systeminfo > %docdir%\PC-info\SystemInfo.txt
-systeminfo /FO CSV > %docdir%\PC-info\SystemInfo.csv
-msinfo32 /report %docdir%\PC-info\Detailed-System-Information-MSInfo32.txt
-echo -%ESC%[92m Windows Version Information - -%ESC%[36m %docdir%\PC-info\Windows-version.txt %ESC%[0m
-ver > "%docdir%\PC-info\Windows-version.txt"
-echo -%ESC%[92m Export Current Tasks to -%ESC%[36m %docdir%\PC-info\Tasks-before-cleanup.csv %ESC%[0m
-schtasks /query /v /fo CSV > "%docdir%\PC-info\Tasks-before-cleanup.csv"​
-echo -%ESC%[92m Export Windows Services to -%ESC%[36m %docdir%\PC-info\Services-before-cleanup.csv %ESC%[0m
-powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "Get-CIMInstance -Class Win32_Service | Select-Object Name, DisplayName, Description, StartMode, DelayedAutoStart, StartName, PathName, State, ProcessId | Export-CSV -Path %docdir%\PC-info\Services-before-cleanup.csv​"
-sc query state=all > %docdir%\PC-info\All-Services-before-cleanup.txt
-sc query > %docdir%\PC-info\Running-Services-before-cleanup.txt
-net start > %docdir%\PC-info\List-of-Running-Services-before-cleanup.txt
-echo -%ESC%[92m Please Backup your credentials to -%ESC%[36m %docdir%\PC-info\Credentials.crd %ESC%[0m by running: Rundll32.exe keymgr.dll,KRShowKeyMgr
+powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "Get-LocalUser | Select-Object Name,PrincipalSource | Out-File -filepath '%docdir%\%mb% %model% PC-info\All_Accounts.txt'"
+echo -%ESC%[92m List all Optional Capabilities - Save to -%ESC%[36m %docdir%\%mb% %model% PC-info\Windows-Capability-listing-before-cleanup.txt %ESC%[0m
+dism /Online /Get-Capabilities /Format:Table > "%docdir%\%mb% %model% PC-info\Windows-Capability-listing-before-cleanup.txt"
+echo -%ESC%[92m List all Optional Features - Save to -%ESC%[36m %docdir%\%mb% %model% PC-info\Windows-Features-listing-before-cleanup.txt %ESC%[0m
+dism /Online /Get-Features /Format:Table > "%docdir%\%mb% %model% PC-info\Windows-Features-listing-before-cleanup.txt"
+echo -%ESC%[92m List of Provisioned Application Packages - Save to -%ESC%[36m %docdir%\%mb% %model% PC-info\AppPackages-before-cleanup.txt %ESC%[0m
+dism /Online /Get-ProvisionedAppxPackages > "%docdir%\%mb% %model% PC-info\AppPackages-before-cleanup.txt"
+echo -%ESC%[92m List of Drivers - Save to -%ESC%[36m %docdir%\%mb% %model% PC-info\Windows-Drivers.txt %ESC%[0m
+dism /Online /Get-Drivers /format:Table > "%docdir%\%mb% %model% PC-info\Windows-Drivers.txt"
+echo -%ESC%[92m List of Packages - Save to -%ESC%[36m %docdir%\%mb% %model% PC-info\Windows-Packages.txt %ESC%[0m
+dism /Online /Get-Packages /format:Table > "%docdir%\%mb% %model% PC-info\Windows-Packages.txt"
+echo -%ESC%[92m International Settings - Save to -%ESC%[36m %docdir%\%mb% %model% PC-info\International-Settings.txt %ESC%[0m
+dism /Online /Get-Intl > "%docdir%\%mb% %model% PC-info\International-Settings.txt"
+echo -%ESC%[92m Saving PC information to -%ESC%[36m %docdir%\%mb% %model% PC-info\SystemInfo.txt %ESC%[0m
+systeminfo > "%docdir%\%mb% %model% PC-info\SystemInfo.txt"
+systeminfo /FO CSV > "%docdir%\%mb% %model% PC-info\SystemInfo.csv"
+msinfo32 /report "%docdir%\%mb% %model% PC-info\Detailed-System-Information-MSInfo32.txt"
+echo -%ESC%[92m Windows Version Information - -%ESC%[36m %docdir%\%mb% %model% PC-info\Windows-version.txt %ESC%[0m
+ver > "%docdir%\%mb% %model% PC-info\Windows-version.txt"
+echo -%ESC%[92m Export Current Tasks to -%ESC%[36m %docdir%\%mb% %model% PC-info\Tasks-before-cleanup.csv %ESC%[0m
+schtasks /query /v /fo CSV > "%docdir%\%mb% %model% PC-info\Tasks-before-cleanup.csv"​
+echo -%ESC%[92m Export Windows Services to -%ESC%[36m %docdir%\%mb% %model% PC-info\Services-before-cleanup.csv %ESC%[0m
+powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "Get-CIMInstance -Class Win32_Service | Select-Object Name, DisplayName, Description, StartMode, DelayedAutoStart, StartName, PathName, State, ProcessId | Export-CSV -Path '%docdir%\%mb% %model% PC-info\Services-before-cleanup.csv'​"
+sc query state=all > "%docdir%\%mb% %model% PC-info\All-Services-before-cleanup.txt"
+sc query > "%docdir%\%mb% %model% PC-info\Running-Services-before-cleanup.txt"
+net start > "%docdir%\%mb% %model% PC-info\List-of-Running-Services-before-cleanup.txt"
+echo -%ESC%[92m Please Backup your credentials to -%ESC%[36m %docdir%\%mb% %model% PC-info\Credentials.crd %ESC%[0m by running: Rundll32.exe keymgr.dll,KRShowKeyMgr
+Rundll32.exe keymgr.dll,KRShowKeyMgr
+echo -%ESC%[92m Export Windows Product Key to -%ESC%[36m %docdir%\%mb% %model% PC-info\Windows-Product-Key.txt %ESC%[0m
+reg export HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform "%docdir%\%mb% %model% PC-info\Windows-Product-Key.txt"
 
 for /f "delims=: tokens=*" %%x in ('findstr /b ::: "%~f0"') do @echo(%%x
 echo %ESC%[97m
@@ -118,7 +125,7 @@ rem bcdedit /set hypervisorlaunchtype off
 rem dism /Online /NoRestart /Disable-Feature:Microsoft-Hyper-V
 
 echo -%ESC%[32m To prevent a specific update from installing Download the "Show or hide updates" troubleshooter package from the Microsoft website: %ESC%[36m https://download.microsoft.com/download/f/2/2/f22d5fdb-59cd-4275-8c95-1be17bf70b21/wushowhide.diagcab %ESC%[0m
-powershell -c "Invoke-WebRequest -Uri 'https://download.microsoft.com/download/f/2/2/f22d5fdb-59cd-4275-8c95-1be17bf70b21/wushowhide.diagcab' -OutFile '%docdir%\PC-info\wushowhide.diagcab'"
+powershell -c "Invoke-WebRequest -Uri 'https://download.microsoft.com/download/f/2/2/f22d5fdb-59cd-4275-8c95-1be17bf70b21/wushowhide.diagcab' -OutFile '%docdir%\%mb% %model% PC-info\wushowhide.diagcab'"
 
 echo -%ESC%[32m Microsoft Edge uninstall %ESC%[0m
 IF EXIST Edge-uninstall.ps1 (powershell.exe -ExecutionPolicy Bypass -File ./Edge-uninstall.ps1 ) ELSE (msg "%username%" Edge-uninstall.ps1 not found! & echo Edge-uninstall.ps1 not found! )
@@ -217,7 +224,6 @@ reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" 
 echo -%ESC%[32m Disable from Preinstalled Apps in Windows 10 %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "PreInstalledAppsEnabled" /t REG_DWORD /d 0
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "PreInstalledAppsEverEnabled" /t REG_DWORD /d 0
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "SystemPaneSuggestionsEnabled " /t REG_DWORD /d 0
 echo -%ESC%[32m Disable from Windows Spotlight %ESC%[0m
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /f /v "RotatingLockScreenEnabled" /t REG_DWORD /d 0
 echo -%ESC%[32m Disable from Get fun facts, tips, tricks, and moe on your lock screen %ESC%[0m
@@ -311,8 +317,8 @@ echo -%ESC%[32m Add Feature: WMIC. A Windows Management Instrumentation (WMI) co
 dism /Online /NoRestart /Add-Capability /CapabilityName:WMIC~~~~
 echo -%ESC%[32m Add .NET Framework %ESC%[0m
 dism /Online /NoRestart /Add-Capability /CapabilityName:NetFX3~~~~
-echo %ESC%[92m List all Optional Capabilities - Save to Documents\PC-info %ESC%[0m
-dism /Online /Get-Capabilities /Format:Table > "%docdir%\PC-info\Windows-Capability-listing-after-cleanup.txt"
+echo %ESC%[92m List all Optional Capabilities - Save to %docdir%\%mb% %model% PC-info %ESC%[0m
+dism /Online /Get-Capabilities /Format:Table > "%docdir%\%mb% %model% PC-info\Windows-Capability-listing-after-cleanup.txt"
 
 echo %ESC%[35m Enable High Performance Power Scheme %ESC%[0m
 powercfg /l
@@ -363,7 +369,7 @@ reg add "HKCU\Software\Policies\Microsoft\Windows\CloudContent" /f /v "DisableTa
 
 echo -%ESC%[32m Add Windows Defender ExclusionPath to enable host protection: %ESC%[0m
 powershell -inputformat none -outputformat none -NonInteractive -Command "Add-MpPreference -ExclusionPath '%UserProfile%\Downloads\WinClean\'"
-powershell -inputformat none -outputformat none -NonInteractive -Command "Add-MpPreference -ExclusionPath 'D:\Microsoft\Downloads\WinClean\'"
+powershell -inputformat none -outputformat none -NonInteractive -Command "Add-MpPreference -ExclusionPath '%downloaddir%\WinClean\'"
 powershell -inputformat none -outputformat none -NonInteractive -Command "Add-MpPreference -ExclusionPath '%SystemRoot%\System32\drivers\etc\hosts'"
 
 echo -%ESC%[32m Transfer Hosts File: %ESC%[0m
@@ -530,8 +536,9 @@ reg add "HKLM\Software\Policies\Microsoft\Windows\Explorer" /f /v "DisableSearch
 echo -%ESC%[32m Enable Admin Shares... %ESC%[0m
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\system" /f /v LocalAccountTokenFilterPolicy /t REG_DWORD /d 1
 
-echo -%ESC%[32m Remove the Limit local account use of blank passwords to console logon only... %ESC%[0m
-reg add "HKLM\System\CurrentControlSet\Control\Lsa" /f /v "LimitBlankPasswordUse" /t REG_DWORD /d 0
+echo -%ESC%[32m Remove the Limit local account use of blank passwords to console logon only... %ESC%[0m (disabled now for security)
+rem reg add "HKLM\System\CurrentControlSet\Control\Lsa" /f /v "LimitBlankPasswordUse" /t REG_DWORD /d 0
+reg add "HKLM\System\CurrentControlSet\Control\Lsa" /f /v "LimitBlankPasswordUse" /t REG_DWORD /d 1
 
 echo -%ESC%[32m Enable Local Security Authority Protection... %ESC%[0m
 reg add "HKLM\System\CurrentControlSet\Control\Lsa" /f /v RunAsPPL /t REG_DWORD /d 1
