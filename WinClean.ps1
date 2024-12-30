@@ -16,7 +16,9 @@ Start-Process powershell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass 
 Exit
 }
 $docdir = Get-ItemPropertyValue -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" -Name Personal
-$DebloatFolder = $docdir+"\PC-info"
+$mb = Get-ItemPropertyValue -Path "HKLM:\HARDWARE\DESCRIPTION\System\BIOS" -Name BaseBoardManufacturer
+$model = Get-ItemPropertyValue -Path "HKLM:\HARDWARE\DESCRIPTION\System\BIOS" -Name BaseBoardProduct
+$DebloatFolder = $docdir+"\"+$mb+" "+$model+" PC-info"
 If (Test-Path $DebloatFolder) {
 Write-Output "$DebloatFolder exists. Skipping."
 }
@@ -37,9 +39,9 @@ Write-Verbose -Message ('Starting Sysprep Fixes')
 #Creates a PSDrive to be able to access the 'HKCR' tree
 New-PSDrive -Name HKCR -PSProvider Registry -Root HKEY_CLASSES_ROOT
 
-# view a list of installed apps:
-Get-AppxPackage -AllUsers | Select Name, PackageFullName | Out-File -filepath "$DebloatFolder\installed-apps-before-cleaning.txt"
-Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion, Publisher, InstallDate | Format-Table -AutoSize | Out-File -filepath "$DebloatFolder\installed-programs-before-cleaning.txt"
+Write-Output "Save a list of installed apps to $DebloatFolder"
+Get-AppxPackage -AllUsers | Select Name, PackageFullName | Out-File -filepath "$DebloatFolder\Installed-apps-before-cleaning.txt"
+Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion, Publisher, InstallDate | Format-Table -AutoSize | Out-File -filepath "$DebloatFolder\Installed-programs-before-cleaning.txt"
 
 Write-Output "Removing bloatware apps."
 [regex]$WhitelistedApps ='Microsoft.VP9VideoExtensions|Microsoft.NET.Native|Microsoft.HEVCVideoExtension|Microsoft.MicrosoftStickyNotes|Microsoft.Paint|Microsoft.RawImageExtension|Microsoft.WindowsNotepad|Microsoft.WindowsSoundRecorder|Microsoft.LanguageExperiencePackro-RO|Microsoft.AAD.BrokerPlugin|Microsoft.AccountsControl|Microsoft.AsyncTextService|Microsoft.BioEnrollment|Microsoft.CredDialogHost|Microsoft.ECApp|Microsoft.LockApp|Microsoft.UI.Xaml.CBS|Microsoft.Win32WebViewHost|Microsoft.Windows.Apprep.ChxApp|Microsoft.Windows.CallingShellApp|Microsoft.Windows.CapturePicker|Microsoft.Windows.CloudExperienceHost|Microsoft.Windows.ContentDeliveryManager|Microsoft.Windows.FileExplorer|Microsoft.Windows.NarratorQuickStart|Microsoft.Windows.OOBENetworkCaptivePortal|Microsoft.Windows.OOBENetworkConnectionFlow|Microsoft.Windows.ParentalControls|Microsoft.Windows.PeopleExperienceHost|Microsoft.Windows.PinningConfirmationDialog|Microsoft.Windows.Search|Microsoft.Windows.ShellExperienceHost|Microsoft.Windows.XGpuEjectDialog|MicrosoftWindows.UndockedDevKit|NcsiUwpApp|windows.immersivecontrolpanel|Windows.PrintDialog|Microsoft.UI.Xaml|Microsoft.VCLibs|Microsoft.Windows.StartMenuExperienceHost|Microsoft.WebMediaExtensions|Microsoft.WebpImageExtension|Microsoft.WindowsCalculator|Microsoft.DesktopAppInstaller|Microsoft.WindowsTerminal|Microsoft.HEIFImageExtension|Microsoft.Windows.Photos|Microsoft.WindowsStore|Microsoft.ScreenSketch|Microsoft.WindowsCamera|Microsoft.Winget.Source'
@@ -52,8 +54,8 @@ Get-AppxPackage | Where-Object {$_.Name -NotMatch $WhitelistedApps} | Remove-App
 }
 
 # To restore all Apps use: Get-AppxPackage -AllUsers| Foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"}
-Write-Output "All Apps remaining after cleanup:..."
-Get-AppxPackage -AllUsers | Select Name, PackageFullName | Out-File -filepath "$DebloatFolder\installed-apps-after-cleaning.txt"
+Write-Output "Save a list of All Apps remaining after cleanup to Documents\PC-info"
+Get-AppxPackage -AllUsers | Select Name, PackageFullName | Out-File -filepath "$DebloatFolder\Installed-apps-after-cleaning.txt"
 
 # Cleanup Start Menu
 Write-Output "Cleaning up the Start Menu Apps"
@@ -142,7 +144,7 @@ Stop-Process -name explorer
 
 # Remove-Item $layoutFile
 
-# Disable Memory Compression
+Write-Output "Disable Memory Compression"
 Get-MMAgent
 Disable-MMAgent -alp
 Disable-MMAgent -apl
@@ -166,11 +168,11 @@ reg unload HKU\Default_User
 Write-Host "Unloading the HKCR drive..."
 Remove-PSDrive HKCR 
 
-#Erases TEMP Folders: "https://christitustech.github.io/winutil/dev/tweaks/Essential-Tweaks/DeleteTempFiles"
+Write-Output "Erases TEMP Folders: https://christitustech.github.io/winutil/dev/tweaks/Essential-Tweaks/DeleteTempFiles"
 Get-ChildItem -Path "C:\Windows\Temp" *.* -Recurse | Remove-Item -Force -Recurse
 Get-ChildItem -Path $env:TEMP *.* -Recurse | Remove-Item -Force -Recurse
 
-# Run Chris Titus Cleanup Scripts
+Write-Output "Run Chris Titus Cleanup Scripts"
 irm "https://christitus.com/win" | iex
 
 Start-Sleep 1
