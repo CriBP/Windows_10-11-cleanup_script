@@ -10,7 +10,7 @@ if not "%1"=="max" start /max cmd /c %0 max & Exit /b > CleanUp.log
 for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set ESC=%%b
 :: Set Color variables
 :: STYLES
-set set Bold=%ESC%[1m && set Underline=%ESC%[4m && set Inverse=%ESC%[7m && Reset=%ESC%[0m
+set Bold=%ESC%[1m && set Underline=%ESC%[4m && set Inverse=%ESC%[7m && set Reset=%ESC%[0m
 :: NORMAL FOREGROUND COLORS
 set Black=%ESC%[30m && set Red=%ESC%[31m && set Green=%ESC%[32m && set Yellow=%ESC%[33m && set Blue=%ESC%[34m && set Magenta=%ESC%[35m && set Cyan=%ESC%[36m && set White=%ESC%[37m
 :: NORMAL BACKGROUND COLORS
@@ -21,9 +21,9 @@ set LWhite=%ESC%[90m && set SRed=%ESC%[91m && set SGreen=%ESC%[92m && set SYello
 set SBBlack=%ESC%[100m && set SBRed=%ESC%[101m && set SBGreen=%ESC%[102m && set SBYellow=%ESC%[103m && set SBBlue=%ESC%[104m && set SBMagenta=%ESC%[105m && set SBCyan=%ESC%[106m && set SBWhite=%ESC%[107m
 :: COMBINATIONS: inverse foreground-background %ESC%[7m , inverse red foreground color %ESC%[7;31m , and nested %ESC%[7m before %ESC%[31m  nested , nested %ESC%[7m %ESC%[31m before %ESC%[7m  nested %ESC%[0m
 echo %Bold%- Commands sintax and utils @ %Cyan% https://ss64.com %Reset%
-echo "Color" Sets the default console foreground and background colours. %Cyan% https://ss64.com/nt/color.html  %Reset%
+echo "Color" Sets the default console foreground and background colours. %Cyan% https://ss64.com/nt/color.html %Reset%
 
-echo %Bold%- Changed the Encoding to chcp 65001 > nul %SCyan%  [ Unicode Encoding ] %Reset%
+echo %Bold%- Changed the Encoding to chcp 65001 > nul %SCyan% [ Unicode Encoding ] %Reset%
 chcp 65001 > nul
 
 echo -%Green% Save important PC information to Documents\PC-info %Reset% -%Cyan% https://www.tenforums.com/tutorials/3443-view-user-account-details-windows-10-a.html %Reset%
@@ -64,10 +64,10 @@ powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "
 sc query state=all > "%docdir%\%mb% %model% PC-info\All-Services-before-cleanup.txt"
 sc query > "%docdir%\%mb% %model% PC-info\Running-Services-before-cleanup.txt"
 net start > "%docdir%\%mb% %model% PC-info\List-of-Running-Services-before-cleanup.txt"
-echo -%SGreen% Please Backup your credentials to -%Cyan% %docdir%\%mb% %model% PC-info\Credentials.crd %Reset% by running: Rundll32.exe keymgr.dll,KRShowKeyMgr
+echo -%SGreen% Please Backup your credentials to -%Cyan% %docdir%\%mb% %model% PC-info\Credentials.crd %Reset% by running: %Cyan%Rundll32.exe keymgr.dll,KRShowKeyMgr%Reset%
 Rundll32.exe keymgr.dll,KRShowKeyMgr
 echo -%SGreen% Export Windows Product Key to -%Cyan% %docdir%\%mb% %model% PC-info\Windows-Product-Key.txt %Reset%
-reg export HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform "%docdir%\%mb% %model% PC-info\Windows-Product-Key.txt"
+FOR /F "tokens=2* skip=2" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "BackupProductKeyDefault"') do (echo %%b > "%docdir%\%mb% %model% PC-info\Windows-Product-Key.txt")
 
 for /f "delims=: tokens=*" %%x in ('findstr /b ::: "%~f0"') do @echo(%%x
 echo %SWhite% 
@@ -1209,7 +1209,7 @@ del /q /f /s %temp%\* && del /s /q c:\Windows\temp
 echo -%Green% Run Disk Cleanup - Runs Disk Cleanup on Drive C: and removes old Windows Updates. -%Cyan% https://ss64.com/nt/cleanmgr.html %Reset%
 cleanmgr.exe /d C: /VERYLOWDISK /Autoclean
 echo COLOR TEST
-color 00 & ping -n 2 127.0.0.1>nul & color 01 & ping -n 2 127.0.0.1>nul & color 02 & ping -n 2 127.0.0.1>nul & color 03 & ping -n 2 127.0.0.1>nul & color 04 & ping -n 2 127.0.0.1>nul & color 05 & ping -n 2 127.0.0.1>nul & color 06 & ping -n 2 127.0.0.1>nul & color 07 & ping -n 2 127.0.0.1>nul & color 09 & ping -n 2 127.0.0.1>nul & color 0A & ping -n 2 127.0.0.1>nul & color 0B & ping -n 2 127.0.0.1>nul & color 0C & ping -n 2 127.0.0.1>nul & color 0D & ping -n 2 127.0.0.1>nul & color 0E & ping -n 2 127.0.0.1>nul & color 0F & ping -n 2 127.0.0.1>nul & color 00 & ping -n 2 127.0.0.1>nul & color 10 & ping -n 2 127.0.0.1>nul & color 20 & ping -n 2 127.0.0.1>nul & color 30 & ping -n 2 127.0.0.1>nul & color 40 & ping -n 2 127.0.0.1>nul & color 50 & ping -n 2 127.0.0.1>nul & color 60 & ping -n 2 127.0.0.1>nul & color 70 & ping -n 2 127.0.0.1>nul & color 80 & ping -n 2 127.0.0.1>nul & color 90 & ping -n 2 127.0.0.1>nul & color A0 & ping -n 2 127.0.0.1>nul & color B0 & ping -n 2 127.0.0.1>nul & color C0 & ping -n 2 127.0.0.1>nul & color D0 & ping -n 2 127.0.0.1>nul & color E0 & ping -n 2 127.0.0.1>nul & color F0 & ping -n 2 127.0.0.1>nul & color 07
+color 00 & ping -n 1 127.0.0.1>nul & color 01 & ping -n 1 127.0.0.1>nul & color 02 & ping -n 1 127.0.0.1>nul & color 03 & ping -n 1 127.0.0.1>nul & color 04 & ping -n 1 127.0.0.1>nul & color 05 & ping -n 1 127.0.0.1>nul & color 06 & ping -n 1 127.0.0.1>nul & color 07 & ping -n 1 127.0.0.1>nul & color 09 & ping -n 1 127.0.0.1>nul & color 0A & ping -n 1 127.0.0.1>nul & color 0B & ping -n 1 127.0.0.1>nul & color 0C & ping -n 1 127.0.0.1>nul & color 0D & ping -n 1 127.0.0.1>nul & color 0E & ping -n 1 127.0.0.1>nul & color 0F & ping -n 1 127.0.0.1>nul & color 00 & ping -n 1 127.0.0.1>nul & color 10 & ping -n 1 127.0.0.1>nul & color 20 & ping -n 1 127.0.0.1>nul & color 30 & ping -n 1 127.0.0.1>nul & color 40 & ping -n 1 127.0.0.1>nul & color 50 & ping -n 1 127.0.0.1>nul & color 60 & ping -n 1 127.0.0.1>nul & color 70 & ping -n 1 127.0.0.1>nul & color 80 & ping -n 1 127.0.0.1>nul & color 90 & ping -n 1 127.0.0.1>nul & color A0 & ping -n 1 127.0.0.1>nul & color B0 & ping -n 1 127.0.0.1>nul & color C0 & ping -n 1 127.0.0.1>nul & color D0 & ping -n 1 127.0.0.1>nul & color E0 & ping -n 1 127.0.0.1>nul & color F0 & ping -n 1 127.0.0.1>nul & color 07
 
 dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase
 
