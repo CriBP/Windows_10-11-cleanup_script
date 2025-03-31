@@ -1,10 +1,10 @@
 Color 07
 @echo Self elevate
+net.exe session 1>NUL 2>NUL || (Echo This script requires elevated rights. Please accept Administrator rights & powershell -Command "Start-Process '%downloaddir%\WinClean\winclean.bat' -Verb runAs" & exit /b 1) > "%downloaddir%\WinClean\admin.log"
+if not "%1"=="max" start /max cmd /c %0 max & Exit /b >> CleanUp.log
 FOR /F "tokens=2* skip=2" %%a in ('reg query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" /v "{374DE290-123F-4565-9164-39C4925E467B}"') do (set downloaddir=%%b)
 md %downloaddir%\WinClean
 cd %downloaddir%\WinClean
-net.exe session 1>NUL 2>NUL || (Echo This script requires elevated rights. Please accept Administrator rights & powershell -Command "Start-Process '%downloaddir%\WinClean\winclean.bat' -Verb runAs" & exit /b 1) > "%downloaddir%\WinClean\admin.log"
-if not "%1"=="max" start /max cmd /c %0 max & Exit /b > CleanUp.log
 @echo Generate ANSI ESC characters for color codes
 for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set ESC=%%b
 @echo Set Color variables
@@ -32,41 +32,49 @@ FOR /F "tokens=2* skip=2" %%a in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\C
 FOR /F "tokens=2* skip=2" %%a in ('reg query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" /v "Personal"') do (set docdir=%%b)
 @echo %cpu% on %mb% - %model%
 md "%docdir%\%mb% %model% PC-info"
-wmic useraccount list full >"%docdir%\%mb% %model% PC-info\UserAccountDetails.txt"
+@echo -%Green% Add date and time to files %Reset%
+set today=%date:~10,4%-%date:~4,2%-%date:~7,2%_%time:~0,2%h%time:~3,2%m%time:~6,2%
+@echo -%Green% Export Environment Variables -%Cyan% %docdir%\%mb% %model% PC-info\%today%_Environment-Variables.txt %Reset%
+set >> "%docdir%\%mb% %model% PC-info\%today%_Environment-Variables.txt"
+::  use a simple for loop in the cmd prompt to import back all the variables:
+:: for /F %a in (Environment-Variables.txt) do SET %a
+wmic useraccount list full >"%docdir%\%mb% %model% PC-info\%today%_UserAccountDetails.txt"
 @echo -%Green% Export WiFi passwords -%Cyan% https://www.elevenforum.com/t/backup-and-restore-wi-fi-network-profiles-in-windows-11.4472/ %Reset%
 netsh wlan show profiles
 netsh wlan export profile key=clear folder="%docdir%\%mb% %model% PC-info"
+:: To import several profiles at once, you can use a loop in the command prompt:
+:: for %a in (*.xml) do netsh wlan add profile filename="%a"
 @echo -%Green% Check if Users are a Microsoft account or Local account -%Cyan% https://www.tenforums.com/tutorials/5387-how-tell-if-local-account-microsoft-account-windows-10-a.html %Reset%
-powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "Get-LocalUser | Select-Object Name,PrincipalSource | Out-File -filepath '%docdir%\%mb% %model% PC-info\All_Accounts.txt'"
-@echo -%SGreen% List all Optional Capabilities - Save to -%Cyan% %docdir%\%mb% %model% PC-info\Windows-Capability-listing-before-cleanup.txt %Reset%
-dism /Online /Get-Capabilities /Format:Table > "%docdir%\%mb% %model% PC-info\Windows-Capability-listing-before-cleanup.txt"
-@echo -%SGreen% List all Optional Features - Save to -%Cyan% %docdir%\%mb% %model% PC-info\Windows-Features-listing-before-cleanup.txt %Reset%
-dism /Online /Get-Features /Format:Table > "%docdir%\%mb% %model% PC-info\Windows-Features-listing-before-cleanup.txt"
-@echo -%SGreen% List of Provisioned Application Packages - Save to -%Cyan% %docdir%\%mb% %model% PC-info\AppPackages-before-cleanup.txt %Reset%
-dism /Online /Get-ProvisionedAppxPackages > "%docdir%\%mb% %model% PC-info\AppPackages-before-cleanup.txt"
-@echo -%SGreen% List of Drivers - Save to -%Cyan% %docdir%\%mb% %model% PC-info\Windows-Drivers.txt %Reset%
-dism /Online /Get-Drivers /format:Table > "%docdir%\%mb% %model% PC-info\Windows-Drivers.txt"
-@echo -%SGreen% List of Packages - Save to -%Cyan% %docdir%\%mb% %model% PC-info\Windows-Packages.txt %Reset%
-dism /Online /Get-Packages /format:Table > "%docdir%\%mb% %model% PC-info\Windows-Packages.txt"
-@echo -%SGreen% International Settings - Save to -%Cyan% %docdir%\%mb% %model% PC-info\International-Settings.txt %Reset%
-dism /Online /Get-Intl > "%docdir%\%mb% %model% PC-info\International-Settings.txt"
-@echo -%SGreen% Saving PC information to -%Cyan% %docdir%\%mb% %model% PC-info\SystemInfo.txt %Reset%
-systeminfo > "%docdir%\%mb% %model% PC-info\SystemInfo.txt"
-systeminfo /FO CSV > "%docdir%\%mb% %model% PC-info\SystemInfo.csv"
-msinfo32 /report "%docdir%\%mb% %model% PC-info\Detailed-System-Information-MSInfo32.txt"
-@echo -%SGreen% Windows Version Information - -%Cyan% %docdir%\%mb% %model% PC-info\Windows-version.txt %Reset%
-ver > "%docdir%\%mb% %model% PC-info\Windows-version.txt"
-@echo -%SGreen% Export Current Tasks to -%Cyan% %docdir%\%mb% %model% PC-info\Tasks-before-cleanup.csv %Reset%
-schtasks /query /v /fo CSV > "%docdir%\%mb% %model% PC-info\Tasks-before-cleanup.csv"​
-@echo -%SGreen% Export Windows Services to -%Cyan% %docdir%\%mb% %model% PC-info\Services-before-cleanup.csv %Reset%
-powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "Get-CIMInstance -Class Win32_Service | Select-Object Name, DisplayName, Description, StartMode, DelayedAutoStart, StartName, PathName, State, ProcessId | Export-CSV -Path '%docdir%\%mb% %model% PC-info\Services-before-cleanup.csv'​"
-sc query state=all > "%docdir%\%mb% %model% PC-info\All-Services-before-cleanup.txt"
-sc query > "%docdir%\%mb% %model% PC-info\Running-Services-before-cleanup.txt"
-net start > "%docdir%\%mb% %model% PC-info\List-of-Running-Services-before-cleanup.txt"
-@echo -%SGreen% Please Backup your credentials to -%Cyan% %docdir%\%mb% %model% PC-info\Credentials.crd %Reset% by running: %Cyan%Rundll32.exe keymgr.dll,KRShowKeyMgr%Reset%
+powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "Get-LocalUser | Select-Object Name,PrincipalSource | Out-File -filepath '%docdir%\%mb% %model% PC-info\%today%_All_Accounts.txt'"
+@echo -%SGreen% List all Optional Capabilities - Save to -%Cyan% %docdir%\%mb% %model% PC-info\%today%_Windows-Capability-listing-before-cleanup.txt %Reset%
+dism /Online /Get-Capabilities /Format:Table > "%docdir%\%mb% %model% PC-info\%today%_Windows-Capability-listing-before-cleanup.txt"
+@echo -%SGreen% List all Optional Features - Save to -%Cyan% %docdir%\%mb% %model% PC-info\%today%_Windows-Features-listing-before-cleanup.txt %Reset%
+dism /Online /Get-Features /Format:Table > "%docdir%\%mb% %model% PC-info\%today%_Windows-Features-listing-before-cleanup.txt"
+@echo -%SGreen% List of Provisioned Application Packages - Save to -%Cyan% %docdir%\%mb% %model% PC-info\%today%_AppPackages-before-cleanup.txt %Reset%
+dism /Online /Get-ProvisionedAppxPackages > "%docdir%\%mb% %model% PC-info\%today%_AppPackages-before-cleanup.txt"
+@echo -%SGreen% List of Drivers - Save to -%Cyan% %docdir%\%mb% %model% PC-info\%today%_Windows-Drivers.txt %Reset%
+dism /Online /Get-Drivers /format:Table > "%docdir%\%mb% %model% PC-info\%today%_Windows-Drivers.txt"
+@echo -%SGreen% List of Packages - Save to -%Cyan% %docdir%\%mb% %model% PC-info\%today%_Windows-Packages.txt %Reset%
+dism /Online /Get-Packages /format:Table > "%docdir%\%mb% %model% PC-info\%today%_Windows-Packages.txt"
+@echo -%SGreen% International Settings - Save to -%Cyan% %docdir%\%mb% %model% PC-info\%today%_International-Settings.txt %Reset%
+dism /Online /Get-Intl > "%docdir%\%mb% %model% PC-info\%today%_International-Settings.txt"
+@echo -%SGreen% Saving PC information to -%Cyan% %docdir%\%mb% %model% PC-info\%today%_SystemInfo.txt %Reset%
+systeminfo > "%docdir%\%mb% %model% PC-info\%today%_SystemInfo.txt"
+systeminfo /FO CSV > "%docdir%\%mb% %model% PC-info\%today%_SystemInfo.csv"
+msinfo32 /report "%docdir%\%mb% %model% PC-info\%today%_Detailed-System-Information-MSInfo32.txt"
+@echo -%SGreen% Windows Version Information - -%Cyan% %docdir%\%mb% %model% PC-info\%today%_Windows-version.txt %Reset%
+ver > "%docdir%\%mb% %model% PC-info\%today%_Windows-version.txt"
+@echo -%SGreen% Export Current Tasks to -%Cyan% %docdir%\%mb% %model% PC-info\%today%_Tasks-before-cleanup.csv %Reset%
+schtasks /query /v /fo CSV > "%docdir%\%mb% %model% PC-info\%today%_Tasks-before-cleanup.csv"
+@echo -%SGreen% Export Windows Services to -%Cyan% %docdir%\%mb% %model% PC-info\%today%_Services-before-cleanup.csv %Reset%
+powershell -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "Get-CIMInstance -Class Win32_Service | Select-Object Name, DisplayName, Description, StartMode, DelayedAutoStart, StartName, PathName, State, ProcessId | Export-CSV -Path '%docdir%\%mb% %model% PC-info\%today%_Services-before-cleanup.csv'"
+sc query state=all > "%docdir%\%mb% %model% PC-info\%today%_All-Services-before-cleanup.txt"
+sc query > "%docdir%\%mb% %model% PC-info\%today%_Running-Services-before-cleanup.txt"
+net start > "%docdir%\%mb% %model% PC-info\%today%_List-of-Running-Services-before-cleanup.txt"
+@echo -%SGreen% Please Backup your credentials to -%Cyan% %docdir%\%mb% %model% PC-info\%today%_Credentials.crd %Reset% by running: %Cyan%Rundll32.exe keymgr.dll,KRShowKeyMgr%Reset%
 Rundll32.exe keymgr.dll,KRShowKeyMgr
-@echo -%SGreen% Export Windows Product Key to -%Cyan% %docdir%\%mb% %model% PC-info\Windows-Product-Key.txt %Reset%
-FOR /F "tokens=2* skip=2" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "BackupProductKeyDefault"') do (echo %%b > "%docdir%\%mb% %model% PC-info\Windows-Product-Key.txt")
+@echo -%SGreen% Export Windows Product Key to -%Cyan% %docdir%\%mb% %model% PC-info\%today%_Windows-Product-Key.txt %Reset%
+FOR /F "tokens=2* skip=2" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v "BackupProductKeyDefault"') do (echo %%b > "%docdir%\%mb% %model% PC-info\%today%_Windows-Backup-Product-Key.txt")
 
 for /f "delims=: tokens=*" %%x in ('findstr /b ::: "%~f0"') do @echo(%%x
 @echo %SWhite% 
@@ -90,7 +98,7 @@ for /f "delims=: tokens=*" %%x in ('findstr /b ::: "%~f0"') do @echo(%%x
 @echo -%SYellow% This is a long script and it can take (from my tests) anywhere between 10-30 minutes depending on the computer speed.
 @echo The scrips will run automatically removing most of the bloatware and leaving a clean and lightweight Operating System
 @echo %SCyan% Important Notes:
-@echo %SWhite% - computer needs to be signed in locally,%SRed% not with a Microsoft Account%SWhite% , this script will disable Microsoft Syncronization, so a previous change to %SGreen%Local Account%SWhite%  is necesary
+@echo %SWhite%- computer needs to be signed in locally,%SRed% not with a Microsoft Account%SWhite% , this script will disable Microsoft Syncronization, so a previous change to %SGreen%Local Account%SWhite%  is necesary
 @echo - this script will %ESC%[95mdisable the Gaming platform and all cloud Syncronization %SWhite% 
 @echo - this script will remove a lot of %ESC%[95mbackground tasks and most of the Microsoft Store Apps %SWhite% 
 @echo - the script is self explanatory, lines of descriptione listed on every step
@@ -136,7 +144,7 @@ rem bcdedit /set hypervisorlaunchtype off
 rem dism /Online /NoRestart /Disable-Feature:Microsoft-Hyper-V
 
 @echo -%Green% To prevent a specific update from installing Download the "Show or hide updates" troubleshooter package from the Microsoft website: %Cyan% https://download.microsoft.com/download/f/2/2/f22d5fdb-59cd-4275-8c95-1be17bf70b21/wushowhide.diagcab %Reset%
-powershell -c "Invoke-WebRequest -Uri 'https://download.microsoft.com/download/f/2/2/f22d5fdb-59cd-4275-8c95-1be17bf70b21/wushowhide.diagcab' -OutFile '%docdir%\%mb% %model% PC-info\wushowhide.diagcab'"
+powershell -c "Invoke-WebRequest -Uri 'https://download.microsoft.com/download/f/2/2/f22d5fdb-59cd-4275-8c95-1be17bf70b21/wushowhide.diagcab' -OutFile '%docdir%\%mb% %model% PC-info\%today%_wushowhide.diagcab'"
 
 @echo -%Green% Microsoft Edge uninstall %Reset%
 IF EXIST Edge-uninstall.ps1 (powershell.exe -ExecutionPolicy Bypass -File ./Edge-uninstall.ps1 ) ELSE (msg "%username%" Edge-uninstall.ps1 not found! & echo Edge-uninstall.ps1 not found! )
@@ -331,7 +339,7 @@ dism /Online /NoRestart /Add-Capability /CapabilityName:WMIC~~~~
 @echo -%Green% Add .NET Framework %Reset%
 dism /Online /NoRestart /Add-Capability /CapabilityName:NetFX3~~~~
 @echo %SGreen% List all Optional Capabilities - Save to %docdir%\%mb% %model% PC-info %Reset%
-dism /Online /Get-Capabilities /Format:Table > "%docdir%\%mb% %model% PC-info\Windows-Capability-listing-after-cleanup.txt"
+dism /Online /Get-Capabilities /Format:Table > "%docdir%\%mb% %model% PC-info\%today%_Windows-Capability-listing-after-cleanup.txt"
 
 @echo %Magenta% Enable High Performance Power Scheme %Reset%
 powercfg /l
