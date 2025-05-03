@@ -1,4 +1,5 @@
 @echo off
+:: Download the latest update from https://github.com/CriBP/Windows_10-11-cleanup_script
 :: Generate ANSI ESC characters for color codes
 for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set ESC=%%b
 :: Setup Winclean environment:

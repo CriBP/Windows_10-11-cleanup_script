@@ -1,3 +1,4 @@
+#Download the latest update from https://github.com/CriBP/Windows_10-11-cleanup_script
 #This function finds any AppX/AppXProvisioned package and uninstalls it, with a few exceptions Whitelisted below.
 #Scripts may be blocked in the system, to get status: Get-ExecutionPolicy -List
 #In order to run this script we need to Enable PowerShell execution: Set-ExecutionPolicy Unrestricted -Force
@@ -172,8 +173,8 @@ Write-Output "Erases TEMP Folders: https://christitustech.github.io/winutil/dev/
 Get-ChildItem -Path "C:\Windows\Temp" *.* -Recurse | Remove-Item -Force -Recurse
 Get-ChildItem -Path $env:TEMP *.* -Recurse | Remove-Item -Force -Recurse
 
-Write-Output "Run Chris Titus Cleanup Scripts"
-irm "https://christitus.com/win" | iex
+Write-Output "To run Chris Titus Cleanup Scripts - use:"
+Write-Output 'irm "https://christitus.com/win" | iex'
 
 Start-Sleep 1
 Write-Output "Finished all tasks"

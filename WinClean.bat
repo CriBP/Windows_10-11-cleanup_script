@@ -1,3 +1,4 @@
+:: Download the latest update from https://github.com/CriBP/Windows_10-11-cleanup_script
 Color 07
 @echo Self elevate
 net.exe session 1>NUL 2>NUL || (Echo This script requires elevated rights. Please accept Administrator rights & powershell -Command "Start-Process '%downloaddir%\WinClean\winclean.bat' -Verb runAs" & exit /b 1) > "%downloaddir%\WinClean\admin.log"
