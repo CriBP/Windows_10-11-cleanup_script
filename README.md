@@ -14,6 +14,7 @@
 		╚═════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝
 
 Cleaning up Windows 10 and 11 could be a long process with many detailed steps, we're trying to cover most of them automatically. If you prefer an interactive method, please check Chris Titus https://github.com/ChrisTitusTech/winutil and O&O ShutUp10++ https://www.oo-software.com/en/shutup10
+Another alternative is Winhance https://winhance.net/ or even Win11Debloat https://github.com/Raphire/Win11Debloat
 
 Please read entirely before proceding!
 
